@@ -153,4 +153,49 @@ $("toggleOnline").onclick=()=>{online=!online;$("toggleOnline").textContent=onli
 $("logout").onclick=()=>{profile=null;online=false;$("cabinet").classList.add("hidden");$("registration").classList.remove("hidden");$("extra").classList.add("hidden");document.querySelectorAll(".choice").forEach(x=>x.classList.remove("selected"));selected=null;$("status").textContent="Не в сети";$("status").classList.remove("on")};
 </script>
 </body>
-</html>
+</html>   $("logout").onclick=()=>{ ... }; // (это последняя строка старого кода)
+</script>
+
+  <!-- ПОДКЛЮЧЕНИЕ К SUPABASE (ИСПОЛНИТЕЛЬ) -->
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    
+    const supabaseUrl = 'https://eevkhnenjrskpupvtkgi.supabase.co';
+    const supabaseKey = 'sb_publishable_6tNocMb7Mv9HqcjVaKxDDQ_PfK1DkXe';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    document.getElementById('submit').addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const selected = document.querySelector('.choice.selected');
+      if (!selected) return alert("Выберите направление");
+      
+      const phone = document.getElementById('phone').value.trim();
+      if (!phone) return alert("Укажите телефон");
+
+      const serviceId = selected.dataset.value; 
+      const isSpec = ['cargo', 'evacuator', 'manipulator'].includes(serviceId);
+      const hunter = isSpec ? 'HUNTER_01' : 'HUNTER_02';
+
+      const { error } = await supabase.from('executors').insert([{
+        name: 'Новый исполнитель',
+        phone: phone,
+        service_id: serviceId,
+        hunter: hunter,
+        is_approved: false,
+        rating: 15
+      }]);
+
+      if (error) {
+        console.error(error);
+        alert('Ошибка базы: ' + error.message);
+      } else {
+        document.getElementById('registration').classList.add('hidden');
+        document.getElementById('pending').classList.remove('hidden');
+        document.getElementById('pendingText').textContent = `Заявка отправлена! Услуга: ${selected.querySelector('span').textContent}. Телефон: ${phone}. Ожидайте проверки.`;
+      }
+    });
+  </script>
+</body>
+</html> 
