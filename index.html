@@ -76,26 +76,17 @@ footer{text-align:center;color:#777;font-size:11px;padding:12px 16px 24px}
     <div id="variantWrap" class="hidden">
       <label for="variant">Вариант транспорта</label><select id="variant"></select>
     </div>
-    <div id="vehicleWrap" class="hidden">
-      <label for="plate">Государственный номер</label><input id="plate" placeholder="Например, 01 KG 123 ABC">
-      <label for="passport">Техпаспорт автомобиля — фото</label><input id="passport" type="file" accept="image/*">
-      <label for="license">Водительское удостоверение — фото</label><input id="license" type="file" accept="image/*">
-      <label for="carphoto">Фото автомобиля</label><input id="carphoto" type="file" accept="image/*">
-    </div>
-    <div id="routeWrap" class="hidden">
-      <label for="route">Направление / специализация</label><input id="route" placeholder="Например, Бишкек — Ош">
-    </div>
     <label for="phone">Телефон / WhatsApp</label><input id="phone" type="tel" placeholder="+996...">
     <label for="email">E-mail</label><input id="email" type="email" placeholder="name@example.com">
     <button class="primary full" id="submit">Отправить заявку</button>
   </div>
-  <p class="note" style="margin-top:14px">Это интерфейсный прототип. Данные, документы и заявки пока не отправляются на сервер. Не загружайте реальные документы до подключения защищённого сервера.</p>
+  <p class="note" style="margin-top:14px">Заявка будет отправлена администратору на проверку.</p>
 </section>
 
 <section class="card hidden" id="pending">
-  <span class="eyebrow">ЗАЯВКА</span><h1>Заявка подготовлена</h1>
+  <span class="eyebrow">ЗАЯВКА</span><h1>Заявка отправлена</h1>
   <p id="pendingText"></p>
-  <div class="note">Это локальный прототип: заявка не отправлена администратору и не получила серверного номера.</div>
+  <div class="note">Ваша заявка на проверке. После одобрения вы сможете выходить на линию.</div>
   <button class="secondary full" id="back">Вернуться</button>
 </section>
 
@@ -106,96 +97,100 @@ footer{text-align:center;color:#777;font-size:11px;padding:12px 16px 24px}
     <p id="cabinetType"></p>
     <div class="row"><button class="secondary" id="toggleOnline">Выйти на линию</button><span class="status" id="cabinetStatus">Не в сети</span></div>
     <hr>
-    <h2>Входящие заказы</h2>
-    <p>Здесь будут отображаться заказы выбранного направления после подключения общей базы и диспетчеризации KYRAAN.</p>
-    <div class="note">Серверная доставка заказов пока не подключена.</div>
+    <h2>Оплата KYRAAN (100 сом/заказ)</h2>
+    <div id="qrContainer" style="text-align:center; margin-top:15px;">
+      <div class="qrbox" id="qrDisplay" style="min-height:150px; border:1px dashed #555; display:flex; align-items:center; justify-content:center; color:#777; border-radius:10px;">Загрузка QR-кода...</div>
+      <p class="small" style="margin-top:10px;">Отправьте 100 сомов на этот QR после выполнения заказа.</p>
+    </div>
   </div>
-  <div class="card">
-    <h2>Оплата KYRAAN</h2>
-    <p>QR-код и отправка чека появятся после подключения платёжного процесса. Сейчас реквизиты не заданы.</p>
-    <div class="note">Не переводите деньги по реквизитам, которых нет в официальном кабинете.</div>
-  </div>
-  <button class="secondary full" id="logout">Выйти из прототипа</button>
 </section>
 </main>
 <footer>KYRAAN · Интерфейсный прототип · НЕ PRODUCTION</footer>
 <script>
 const labels={cargo:"Грузоперевозки",evacuator:"Эвакуатор",manipulator:"Манипулятор",plumber:"Сантехник",cleaning:"Клининг",welder:"Сварщик",electrician:"Электрик",fridge:"Ремонт холодильников",washer:"Ремонт стиральных машин",tv:"Телемастер",hour:"Мастер на час",intercity:"Межгород такси",workers:"Разнорабочие"};
 const variants={cargo:["Porter","Sprinter 1-скат","1-скатная будка (рефрижератор)","1-скатный бортовой","Sprinter 2-скат","2-скатная будка (рефрижератор)","2-скатный бортовой","Гигант бортовой","Гигант будка (рефрижератор)"],evacuator:["Sprinter","Sprinter + прицеп","Atego","Atego + прицеп"],manipulator:["3 тонны — стрела 3 м","5 тонн — стрела 4 м","8 тонн — стрела 7 м","10 тонн — стрела 7 м"]};
-const vehicleTypes=["cargo","evacuator","manipulator"]; const taxiNeedsVehicleDocs=["intercity"];
 const $=id=>document.getElementById(id);
-let selected=null, profile=null, online=false;
+let selected=null, online=false;
 document.querySelectorAll(".choice").forEach(btn=>btn.addEventListener("click",()=>{
   document.querySelectorAll(".choice").forEach(x=>x.classList.remove("selected"));
   btn.classList.add("selected"); selected=btn.dataset.value;
   $("extra").classList.remove("hidden"); $("selectedTitle").textContent=labels[selected];
-  const hasVariants=!!variants[selected], isVehicle=vehicleTypes.includes(selected)||taxiNeedsVehicleDocs.includes(selected), isAd=["intercity","workers"].includes(selected);
+  const hasVariants=!!variants[selected];
   $("variantWrap").classList.toggle("hidden",!hasVariants);
-  $("vehicleWrap").classList.toggle("hidden",!isVehicle);
-  $("routeWrap").classList.toggle("hidden",!isAd);
   if(hasVariants)$("variant").innerHTML=variants[selected].map(v=>`<option>${v}</option>`).join("");
   $("extra").scrollIntoView({behavior:"smooth",block:"nearest"});
 }));
-$("submit").onclick=()=>{
-  if(!selected)return alert("Выберите одно направление");
-  if(!$("phone").value.trim())return alert("Укажите телефон");
-  if(vehicleTypes.includes(selected)||taxiNeedsVehicleDocs.includes(selected)){
-    if(!$("plate").value.trim())return alert("Укажите государственный номер автомобиля");
-    if(!["passport","license","carphoto"].every(id=>$(id).files.length))return alert("Для регистрации нужны фото техпаспорта, водительского удостоверения и автомобиля.");
-  }
-  if(["intercity","workers"].includes(selected)&&!$("route").value.trim())return alert("Укажите направление или специализацию");
-  profile={key:selected,name:labels[selected],variant:variants[selected]?$("variant").value:"",phone:$("phone").value.trim(),email:$("email").value.trim()};
-  $("registration").classList.add("hidden");$("pending").classList.remove("hidden");
-  $("pendingText").textContent=`Выбрано направление: ${profile.name}${profile.variant?" — "+profile.variant:""}. Телефон: ${profile.phone}.`;
-};
 $("back").onclick=()=>{$("pending").classList.add("hidden");$("registration").classList.remove("hidden")};
 $("toggleOnline").onclick=()=>{online=!online;$("toggleOnline").textContent=online?"Выйти с линии":"Выйти на линию";$("cabinetStatus").textContent=online?"На линии":"Не в сети";$("cabinetStatus").classList.toggle("on",online);$("status").textContent=online?"На линии":"Не в сети";$("status").classList.toggle("on",online)};
-$("logout").onclick=()=>{profile=null;online=false;$("cabinet").classList.add("hidden");$("registration").classList.remove("hidden");$("extra").classList.add("hidden");document.querySelectorAll(".choice").forEach(x=>x.classList.remove("selected"));selected=null;$("status").textContent="Не в сети";$("status").classList.remove("on")};
-</script>
-</body>
-</html>   $("logout").onclick=()=>{ ... }; // (это последняя строка старого кода)
 </script>
 
-  <!-- ПОДКЛЮЧЕНИЕ К SUPABASE (ИСПОЛНИТЕЛЬ) -->
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+<!-- ПОДКЛЮЧЕНИЕ К SUPABASE (ИСПОЛНИТЕЛЬ) -->
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+  
+  const supabaseUrl = 'https://eevkhnenjrskpupvtkgi.supabase.co';
+  const supabaseKey = 'sb_publishable_6tNocMb7Mv9HqcjVaKxDDQ_PfK1DkXe';
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  document.getElementById('submit').addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const selectedBtn = document.querySelector('.choice.selected');
+    if (!selectedBtn) return alert("Выберите направление");
     
-    const supabaseUrl = 'https://eevkhnenjrskpupvtkgi.supabase.co';
-    const supabaseKey = 'sb_publishable_6tNocMb7Mv9HqcjVaKxDDQ_PfK1DkXe';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const phone = document.getElementById('phone').value.trim();
+    if (!phone) return alert("Укажите телефон");
 
-    document.getElementById('submit').addEventListener('click', async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+    const serviceId = selectedBtn.dataset.value; 
+    const variantSelect = document.getElementById('variant');
+    const variant = variantSelect ? variantSelect.value : '';
 
-      const selected = document.querySelector('.choice.selected');
-      if (!selected) return alert("Выберите направление");
-      
-      const phone = document.getElementById('phone').value.trim();
-      if (!phone) return alert("Укажите телефон");
+    let hunter = 'HUNTER_02';
+    if (['cargo', 'evacuator', 'manipulator'].includes(serviceId)) hunter = 'HUNTER_01';
+    else if (['intercity', 'workers'].includes(serviceId)) hunter = 'BOARD';
 
-      const serviceId = selected.dataset.value; 
-      const isSpec = ['cargo', 'evacuator', 'manipulator'].includes(serviceId);
-      const hunter = isSpec ? 'HUNTER_01' : 'HUNTER_02';
+    const { error } = await supabase.from('executors').insert([{
+      name: 'Новый исполнитель',
+      phone: phone,
+      service_id: serviceId,
+      hunter: hunter,
+      variant_id: variant,
+      is_approved: false,
+      rating: 15,
+      is_online: false,
+      is_busy: false
+    }]);
 
-      const { error } = await supabase.from('executors').insert([{
-        name: 'Новый исполнитель',
-        phone: phone,
-        service_id: serviceId,
-        hunter: hunter,
-        is_approved: false,
-        rating: 15
-      }]);
+    if (error) {
+      alert('Ошибка базы: ' + error.message);
+    } else {
+      document.getElementById('registration').classList.add('hidden');
+      document.getElementById('pending').classList.remove('hidden');
+      document.getElementById('pendingText').textContent = `Услуга: ${labels[serviceId]}${variant ? ' ('+variant+')' : ''}. Телефон: ${phone}.`;
+    }
+  });
 
-      if (error) {
-        console.error(error);
-        alert('Ошибка базы: ' + error.message);
-      } else {
-        document.getElementById('registration').classList.add('hidden');
-        document.getElementById('pending').classList.remove('hidden');
-        document.getElementById('pendingText').textContent = `Заявка отправлена! Услуга: ${selected.querySelector('span').textContent}. Телефон: ${phone}. Ожидайте проверки.`;
-      }
-    });
-  </script>
+  // Загрузка QR-кода при показе кабинета
+  async function loadQR(hunter) {
+    const qrKey = hunter === 'HUNTER_01' ? 'qr_spec' : 'qr_home';
+    const { data } = await supabase.from('settings').select('value').eq('key', qrKey).single();
+    
+    if (data && data.value) {
+      document.getElementById('qrDisplay').innerHTML = `<img src="${data.value}" style="max-width:100%; border-radius:10px;">`;
+    } else {
+      document.getElementById('qrDisplay').innerHTML = 'QR-код пока не загружен админом.';
+    }
+  }
+
+  // Мы вызываем loadQR, когда пользователь успешно зарегистрировался (для демо)
+  // В реальном проекте hunter берется из базы после логина.
+  window.showCabinet = function(hunter) {
+    document.getElementById('registration').classList.add('hidden');
+    document.getElementById('cabinet').classList.remove('hidden');
+    loadQR(hunter);
+  }
+
+</script>
 </body>
-</html> 
+</html>
