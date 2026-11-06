@@ -1,4 +1,4 @@
-<!doctype html>
+here<!doctype html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
@@ -47,9 +47,9 @@ footer{text-align:center;color:#777;font-size:11px;padding:12px 16px 24px}
 <section class="card" id="registration">
   <span class="eyebrow">РЕГИСТРАЦИЯ</span>
   <h1>Выберите направление</h1>
-  <p>Выберите только одно направление. После регистрации самостоятельно изменить его нельзя.</p>
+  <p>Выберите только одно направление. После регистрации изменить его нельзя.</p>
 
-  <div class="group-title"><strong>Услуги</strong><span class="count">11 направлений</span></div>
+  <div class="group-title"><strong>Услуги</strong></div>
   <div class="grid" id="services">
     <button class="choice" data-value="cargo"><span>Грузоперевозки</span><small>Транспорт</small></button>
     <button class="choice" data-value="evacuator"><span>Эвакуатор</span><small>Транспорт</small></button>
@@ -64,7 +64,7 @@ footer{text-align:center;color:#777;font-size:11px;padding:12px 16px 24px}
     <button class="choice" data-value="hour"><span>Мастер на час</span></button>
   </div>
 
-  <div class="group-title"><strong>Объявления</strong><span class="count">2 направления</span></div>
+  <div class="group-title"><strong>Объявления</strong></div>
   <div class="grid" id="ads">
     <button class="choice" data-value="intercity"><span>Межгород такси</span><small>Объявление</small></button>
     <button class="choice" data-value="workers"><span>Разнорабочие</span><small>Объявление</small></button>
@@ -72,12 +72,31 @@ footer{text-align:center;color:#777;font-size:11px;padding:12px 16px 24px}
 
   <div id="extra" class="hidden">
     <hr>
-    <h2 id="selectedTitle">Дополнительные данные</h2>
+    <h2 id="selectedTitle">Данные для связи</h2>
+    
     <div id="variantWrap" class="hidden">
       <label for="variant">Вариант транспорта</label><select id="variant"></select>
     </div>
-    <label for="phone">Телефон / WhatsApp</label><input id="phone" type="tel" placeholder="+996...">
-    <label for="email">E-mail</label><input id="email" type="email" placeholder="name@example.com">
+    
+    <label for="personName">Ваше имя</label>
+    <input id="personName" type="text" placeholder="Например, Азамат">
+    
+    <label for="phone">Телефон / WhatsApp</label>
+    <input id="phone" type="tel" placeholder="+996...">
+
+    <!-- БЛОК ДЛЯ ВОДИТЕЛЕЙ -->
+    <div id="vehicleDocs" class="hidden" style="background:#222; padding:15px; border-radius:12px; margin-top:15px; border:1px solid #444;">
+      <h2 style="color:var(--gold); font-size:16px;">Данные автомобиля</h2>
+      <label for="plateNumber">Госномер машины</label>
+      <input id="plateNumber" type="text" placeholder="01KG123ABC">
+      
+      <label for="carPhoto">Фото машины</label>
+      <input id="carPhoto" type="file" accept="image/*" style="padding:8px; background:#333;">
+      
+      <label for="techPassport">Фото техпаспорта</label>
+      <input id="techPassport" type="file" accept="image/*" style="padding:8px; background:#333;">
+    </div>
+
     <button class="primary full" id="submit">Отправить заявку</button>
   </div>
   <p class="note" style="margin-top:14px">Заявка будет отправлена администратору на проверку.</p>
@@ -94,37 +113,12 @@ footer{text-align:center;color:#777;font-size:11px;padding:12px 16px 24px}
   <div class="card">
     <span class="eyebrow">КАБИНЕТ ИСПОЛНИТЕЛЯ</span>
     <h1 id="cabinetName">Исполнитель</h1>
-    <p id="cabinetType"></p>
     <div class="row"><button class="secondary" id="toggleOnline">Выйти на линию</button><span class="status" id="cabinetStatus">Не в сети</span></div>
-    <hr>
-    <h2>Оплата KYRAAN (100 сом/заказ)</h2>
-    <div id="qrContainer" style="text-align:center; margin-top:15px;">
-      <div class="qrbox" id="qrDisplay" style="min-height:150px; border:1px dashed #555; display:flex; align-items:center; justify-content:center; color:#777; border-radius:10px;">Загрузка QR-кода...</div>
-      <p class="small" style="margin-top:10px;">Отправьте 100 сомов на этот QR после выполнения заказа.</p>
-    </div>
   </div>
 </section>
 </main>
-<footer>KYRAAN · Интерфейсный прототип · НЕ PRODUCTION</footer>
-<script>
-const labels={cargo:"Грузоперевозки",evacuator:"Эвакуатор",manipulator:"Манипулятор",plumber:"Сантехник",cleaning:"Клининг",welder:"Сварщик",electrician:"Электрик",fridge:"Ремонт холодильников",washer:"Ремонт стиральных машин",tv:"Телемастер",hour:"Мастер на час",intercity:"Межгород такси",workers:"Разнорабочие"};
-const variants={cargo:["Porter","Sprinter 1-скат","1-скатная будка (рефрижератор)","1-скатный бортовой","Sprinter 2-скат","2-скатная будка (рефрижератор)","2-скатный бортовой","Гигант бортовой","Гигант будка (рефрижератор)"],evacuator:["Sprinter","Sprinter + прицеп","Atego","Atego + прицеп"],manipulator:["3 тонны — стрела 3 м","5 тонн — стрела 4 м","8 тонн — стрела 7 м","10 тонн — стрела 7 м"]};
-const $=id=>document.getElementById(id);
-let selected=null, online=false;
-document.querySelectorAll(".choice").forEach(btn=>btn.addEventListener("click",()=>{
-  document.querySelectorAll(".choice").forEach(x=>x.classList.remove("selected"));
-  btn.classList.add("selected"); selected=btn.dataset.value;
-  $("extra").classList.remove("hidden"); $("selectedTitle").textContent=labels[selected];
-  const hasVariants=!!variants[selected];
-  $("variantWrap").classList.toggle("hidden",!hasVariants);
-  if(hasVariants)$("variant").innerHTML=variants[selected].map(v=>`<option>${v}</option>`).join("");
-  $("extra").scrollIntoView({behavior:"smooth",block:"nearest"});
-}));
-$("back").onclick=()=>{$("pending").classList.add("hidden");$("registration").classList.remove("hidden")};
-$("toggleOnline").onclick=()=>{online=!online;$("toggleOnline").textContent=online?"Выйти с линии":"Выйти на линию";$("cabinetStatus").textContent=online?"На линии":"Не в сети";$("cabinetStatus").classList.toggle("on",online);$("status").textContent=online?"На линии":"Не в сети";$("status").classList.toggle("on",online)};
-</script>
+<footer>KYRAAN · Интерфейсный прототип</footer>
 
-<!-- ПОДКЛЮЧЕНИЕ К SUPABASE (ИСПОЛНИТЕЛЬ) -->
 <script type="module">
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
   
@@ -132,30 +126,93 @@ $("toggleOnline").onclick=()=>{online=!online;$("toggleOnline").textContent=onli
   const supabaseKey = 'sb_publishable_6tNocMb7Mv9HqcjVaKxDDQ_PfK1DkXe';
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  document.getElementById('submit').addEventListener('click', async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const labels={cargo:"Грузоперевозки",evacuator:"Эвакуатор",manipulator:"Манипулятор",plumber:"Сантехник",cleaning:"Клининг",welder:"Сварщик",electrician:"Электрик",fridge:"Ремонт холодильников",washer:"Ремонт стиральных машин",tv:"Телемастер",hour:"Мастер на час",intercity:"Межгород такси",workers:"Разнорабочие"};
+  const variants={cargo:["Porter","Sprinter 1-скат","1-скатная будка","1-скатный бортовой","Sprinter 2-скат","2-скатная будка","2-скатный бортовой","Гигант бортовой","Гигант будка"],evacuator:["Sprinter","Sprinter + прицеп","Atego","Atego + прицеп"],manipulator:["3 тонны — стрела 3 м","5 тонн — стрела 4 м","8 тонн — стрела 7 м","10 тонн — стрела 7 м"]};
+  
+  const vehicleCategories = ['cargo', 'evacuator', 'manipulator', 'intercity'];
+  
+  let selected = null;
+  const $ = id => document.getElementById(id);
 
-    const selectedBtn = document.querySelector('.choice.selected');
-    if (!selectedBtn) return alert("Выберите направление");
+  document.querySelectorAll(".choice").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".choice").forEach(x => x.classList.remove("selected"));
+    btn.classList.add("selected"); 
+    selected = btn.dataset.value;
     
-    const phone = document.getElementById('phone').value.trim();
+    $("extra").classList.remove("hidden"); 
+    $("selectedTitle").textContent = labels[selected];
+    
+    const hasVariants = !!variants[selected];
+    $("variantWrap").classList.toggle("hidden", !hasVariants);
+    if(hasVariants) $("variant").innerHTML = variants[selected].map(v => `<option>${v}</option>`).join("");
+    
+    $("vehicleDocs").classList.toggle("hidden", !vehicleCategories.includes(selected));
+    
+    $("extra").scrollIntoView({behavior:"smooth", block:"nearest"});
+  }));
+
+  $("back").onclick = () => { $("pending").classList.add("hidden"); $("registration").classList.remove("hidden") };
+
+  async function uploadFile(file, folder) {
+    const fileName = `${folder}/${Date.now()}_${file.name}`;
+    const { data, error } = await supabase.storage.from('kyraan_docs').upload(fileName, file);
+    if (error) throw error;
+    const { data: urlData } = supabase.storage.from('kyraan_docs').getPublicUrl(fileName);
+    return urlData.publicUrl;
+  }
+
+  $("submit").addEventListener("click", async (e) => {
+    e.preventDefault();
+    
+    if (!selected) return alert("Выберите направление");
+    
+    const personName = $("personName").value.trim() || 'Исполнитель';
+    const phone = $("phone").value.trim();
     if (!phone) return alert("Укажите телефон");
 
-    const serviceId = selectedBtn.dataset.value; 
-    const variantSelect = document.getElementById('variant');
-    const variant = variantSelect ? variantSelect.value : '';
+    let plate = '';
+    let carPhotoUrl = '';
+    let passportUrl = '';
+
+    if (vehicleCategories.includes(selected)) {
+      plate = $("plateNumber").value.trim();
+      const carFile = $("carPhoto").files[0];
+      const passportFile = $("techPassport").files[0];
+
+      if (!plate) return alert("Введите госномер машины");
+      if (!carFile || !passportFile) return alert("Загрузите фото машины и техпаспорта");
+
+      $("submit").textContent = "Загрузка фото...";
+      $("submit").disabled = true;
+
+      try {
+        carPhotoUrl = await uploadFile(carFile, 'cars');
+        passportUrl = await uploadFile(passportFile, 'passports');
+      } catch (err) {
+        alert("Ошибка при загрузке фото: " + err.message);
+        $("submit").textContent = "Отправить заявку";
+        $("submit").disabled = false;
+        return;
+      }
+    }
+
+    $("submit").textContent = "Отправка...";
+
+    const variantSelect = $("variant");
+    const variant = variantSelect && !$("variantWrap").classList.contains("hidden") ? variantSelect.value : '';
 
     let hunter = 'HUNTER_02';
-    if (['cargo', 'evacuator', 'manipulator'].includes(serviceId)) hunter = 'HUNTER_01';
-    else if (['intercity', 'workers'].includes(serviceId)) hunter = 'BOARD';
+    if (['cargo', 'evacuator', 'manipulator'].includes(selected)) hunter = 'HUNTER_01';
+    else if (['intercity', 'workers'].includes(selected)) hunter = 'BOARD';
 
     const { error } = await supabase.from('executors').insert([{
-      name: 'Новый исполнитель',
+      name: personName,
       phone: phone,
-      service_id: serviceId,
+      service_id: selected,
       hunter: hunter,
       variant_id: variant,
+      plate_number: plate,
+      tech_passport: passportUrl,
       is_approved: false,
       rating: 15,
       is_online: false,
@@ -164,120 +221,14 @@ $("toggleOnline").onclick=()=>{online=!online;$("toggleOnline").textContent=onli
 
     if (error) {
       alert('Ошибка базы: ' + error.message);
+      $("submit").textContent = "Отправить заявку";
+      $("submit").disabled = false;
     } else {
-      document.getElementById('registration').classList.add('hidden');
-      document.getElementById('pending').classList.remove('hidden');
-      document.getElementById('pendingText').textContent = `Услуга: ${labels[serviceId]}${variant ? ' ('+variant+')' : ''}. Телефон: ${phone}.`;
+      $("registration").classList.add("hidden");
+      $("pending").classList.remove("hidden");
+      $("pendingText").textContent = `Услуга: ${labels[selected]}${variant ? ' ('+variant+')' : ''}. Телефон: ${phone}.`;
     }
   });
-
-  // Загрузка QR-кода при показе кабинета
-  async function loadQR(hunter) {
-    const qrKey = hunter === 'HUNTER_01' ? 'qr_spec' : 'qr_home';
-    const { data } = await supabase.from('settings').select('value').eq('key', qrKey).single();
-    
-    if (data && data.value) {
-      document.getElementById('qrDisplay').innerHTML = `<img src="${data.value}" style="max-width:100%; border-radius:10px;">`;
-    } else {
-      document.getElementById('qrDisplay').innerHTML = 'QR-код пока не загружен админом.';
-    }
-  }
-
-  // Мы вызываем loadQR, когда пользователь успешно зарегистрировался (для демо)
-  // В реальном проекте hunter берется из базы после логина.
-  window.showCabinet = function(hunter) {
-    document.getElementById('registration').classList.add('hidden');
-    document.getElementById('cabinet').classList.remove('hidden');
-    loadQR(hunter);
-  }
-
 </script>
 </body>
 </html>
-￼Enterype html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#101010">
-<title>KYRAAN — Исполнитель</title>
-<style>
-:root{--bg:#101010;--panel:#1b1b1b;--line:#343434;--gold:#f5a623;--muted:#aaa;--green:#00c995}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:#f5f5f5;font:15px system-ui,-apple-system,Segoe UI,sans-serif}
-header{position:sticky;top:0;z-index:5;background:#151515;border-bottom:1px solid var(--line);padding:14px 16px;display:flex;align-items:center;gap:12px}
-.brand{color:var(--gold);font-weight:900;letter-spacing:.16em;font-size:20px}
-header small{display:block;color:#bbb;font-size:12px}
-main{max-width:760px;margin:auto;padding:16px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:17px;margin-bottom:15px}
-h1{font-size:23px;margin:8px 0 5px}h2{font-size:18px;margin:0 0 12px}
-p{color:var(--muted);line-height:1.5;margin:8px 0}
-.eyebrow{display:inline-block;background:#303030;border-radius:30px;padding:5px 10px;font-size:11px;color:#ddd}
-label{display:block;margin:13px 0 6px;font-size:13px;color:#ddd}
-input,select{width:100%;padding:13px;background:#101010;color:white;border:1px solid #484848;border-radius:10px;font:inherit}
-button{border:0;border-radius:11px;padding:13px 15px;font:inherit;font-weight:700;cursor:pointer}
-.primary{background:var(--gold);color:#17120a}.secondary{background:#333;color:white}.green{background:var(--green);color:#061b13}
-.full{width:100%;margin-top:14px}.hidden{display:none!important}
-.group-title{display:flex;align-items:center;justify-content:space-between;margin:16px 0 9px}
-.group-title strong{font-size:16px}.count{font-size:12px;color:var(--muted)}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-.choice{background:#242424;color:#f5f5f5;border:1px solid #414141;text-align:left;min-height:62px;padding:12px}
-.choice:focus,.choice.selected{border-color:var(--gold);background:#33291b}
-.choice span{display:block;font-size:13px;line-height:1.3}
-.choice small{display:block;color:#aaa;font-size:11px;margin-top:4px}
-.note{background:#302719;border:1px solid #70501c;padding:11px;border-radius:10px;font-size:13px;line-height:1.5;color:#eee}
-.row{display:flex;gap:9px;align-items:center}.row>*{flex:1}
-.status{margin-left:auto;border-radius:20px;background:#303030;padding:6px 10px;font-size:11px}
-.status.on{background:#064b3b;color:#b7ffea}
-hr{border:0;border-top:1px solid var(--line);margin:16px 0}
-footer{text-align:center;color:#777;font-size:11px;padding:12px 16px 24px}
-@media(max-width:430px){main{padding:11px}.card{padding:14px}.grid{gap:7px}.choice{padding:10px;min-height:66px}}
-</style>
-</head>
-<body>
-<header>
-  <div><div class="brand">KYRAAN</div><small>КАБИНЕТ ИСПОЛНИТЕЛЯ</small></div>
-  <span class="status" id="status">Не в сети</span>
-</header>
-<main>
-<section class="card" id="registration">
-  <span class="eyebrow">РЕГИСТРАЦИЯ</span>
-  <h1>Выберите направление</h1>
-  <p>Выберите только одно направление. После регистрации самостоятельно изменить его нельзя.</p>
-
-  <div class="group-title"><strong>Услуги</strong><span class="count">11 направлений</span></div>
-  <div class="grid" id="services">
-    <button class="choice" data-value="cargo"><span>Грузоперевозки</span><small>Транспорт</small></button>
-    <button class="choice" data-value="evacuator"><span>Эвакуатор</span><small>Транспорт</small></button>
-    <button class="choice" data-value="manipulator"><span>Манипулятор</span><small>Транспорт</small></button>
-    <button class="choice" data-value="plumber"><span>Сантехник</span></button>
-    <button class="choice" data-value="cleaning"><span>Клининг</span></button>
-    <button class="choice" data-value="welder"><span>Сварщик</span></button>
-    <button class="choice" data-value="electrician"><span>Электрик</span></button>
-    <button class="choice" data-value="fridge"><span>Ремонт холодильников</span></button>
-    <button class="choice" data-value="washer"><span>Ремонт стиральных машин</span></button>
-    <button class="choice" data-value="tv"><span>Телемастер</span></button>
-    <button class="choice" data-value="hour"><span>Мастер на час</span></button>
-  </div>
-
-  <div class="group-title"><strong>Объявления</strong><span class="count">2 направления</span></div>
-  <div class="grid" id="ads">
-    <button class="choice" data-value="intercity"><span>Межгород такси</span><small>Объявление</small></button>
-    <button class="choice" data-value="workers"><span>Разнорабочие</span><small>Объявление</small></button>
-  </div>
-
-  <div id="extra" class="hidden">
-    <hr>
-    <h2 id="selectedTitle">Дополнительные данные</h2>
-    <div id="variantWrap" class="hidden">
-      <label for="variant">Вариант транспорта</label><select id="variant"></select>
-    </div>
-    <label for="phone">Телефон / WhatsApp</label><input id="phone" type="tel" placeholder="+996...">
-    <label for="email">E-mail</label><input id="email" type="email" placeholder="name@example.com">
-    <button class="primary full" id="submit">Отправить заявку</button>
-  </div>
-  <p class="note" style="margin-top:14px">Заявка будет отправлена администратору на проверку.</p>
-</section>
-
-<section class="card hidden" id="pending">
-  <span class="eyebrow">ЗАЯВКА</span><h1>Заявка отправлена</h1>
