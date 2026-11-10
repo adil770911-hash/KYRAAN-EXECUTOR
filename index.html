@@ -1,4 +1,4 @@
-here<!doctype html>
+<!doctype html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
@@ -6,12 +6,15 @@ here<!doctype html>
 <meta name="theme-color" content="#101010">
 <title>KYRAAN — Исполнитель</title>
 <style>
-:root{--bg:#101010;--panel:#1b1b1b;--line:#343434;--gold:#f5a623;--muted:#aaa;--green:#00c995}
+:root{--bg:#101010;--panel:#1b1b1b;--line:#343434;--gold:#f5a623;--muted:#aaa;--green:#00c995;--red:#ff4444}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:#f5f5f5;font:15px system-ui,-apple-system,Segoe UI,sans-serif}
-header{position:sticky;top:0;z-index:5;background:#151515;border-bottom:1px solid var(--line);padding:14px 16px;display:flex;align-items:center;gap:12px}
+body{margin:0;background:var(--bg);color:#f5f5f5;font:15px system-ui,-apple-system,Segoe UI,sans-serif;padding-bottom:20px}
+header{position:sticky;top:0;z-index:10;background:#151515;border-bottom:1px solid var(--line);padding:14px 16px;display:flex;align-items:center;gap:12px}
 .brand{color:var(--gold);font-weight:900;letter-spacing:.16em;font-size:20px}
 header small{display:block;color:#bbb;font-size:12px}
+.header-icons{margin-left:auto;display:flex;align-items:center;gap:15px;font-size:20px}
+.bell-wrap{position:relative;cursor:pointer}
+.bell-badge{display:none;position:absolute;top:-5px;right:-8px;background:var(--red);color:#fff;font-size:10px;font-weight:bold;width:16px;height:16px;border-radius:50%;text-align:center;line-height:16px}
 main{max-width:760px;margin:auto;padding:16px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:17px;margin-bottom:15px}
 h1{font-size:23px;margin:8px 0 5px}h2{font-size:18px;margin:0 0 12px}
@@ -19,105 +22,216 @@ p{color:var(--muted);line-height:1.5;margin:8px 0}
 .eyebrow{display:inline-block;background:#303030;border-radius:30px;padding:5px 10px;font-size:11px;color:#ddd}
 label{display:block;margin:13px 0 6px;font-size:13px;color:#ddd}
 input,select{width:100%;padding:13px;background:#101010;color:white;border:1px solid #484848;border-radius:10px;font:inherit}
-button{border:0;border-radius:11px;padding:13px 15px;font:inherit;font-weight:700;cursor:pointer}
+button{border:0;border-radius:11px;padding:13px 15px;font:inherit;font-weight:700;cursor:pointer;transition:0.2s}
 .primary{background:var(--gold);color:#17120a}.secondary{background:#333;color:white}.green{background:var(--green);color:#061b13}
+.red{background:var(--red);color:#fff}
 .full{width:100%;margin-top:14px}.hidden{display:none!important}
-.group-title{display:flex;align-items:center;justify-content:space-between;margin:16px 0 9px}
-.group-title strong{font-size:16px}.count{font-size:12px;color:var(--muted)}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-.choice{background:#242424;color:#f5f5f5;border:1px solid #414141;text-align:left;min-height:62px;padding:12px}
-.choice:focus,.choice.selected{border-color:var(--gold);background:#33291b}
-.choice span{display:block;font-size:13px;line-height:1.3}
-.choice small{display:block;color:#aaa;font-size:11px;margin-top:4px}
-.note{background:#302719;border:1px solid #70501c;padding:11px;border-radius:10px;font-size:13px;line-height:1.5;color:#eee}
 .row{display:flex;gap:9px;align-items:center}.row>*{flex:1}
-.status{margin-left:auto;border-radius:20px;background:#303030;padding:6px 10px;font-size:11px}
+.status{margin-left:auto;border-radius:20px;background:#303030;padding:6px 10px;font-size:11px;font-weight:bold}
 .status.on{background:#064b3b;color:#b7ffea}
-hr{border:0;border-top:1px solid var(--line);margin:16px 0}
+.status.busy{background:#70501c;color:#ffeebb}
+.order-card{background:#222;border:1px solid #444;border-radius:12px;padding:14px;margin-bottom:10px}
+.order-title{font-weight:bold;font-size:16px;color:white;margin-bottom:4px}
+.order-desc{font-size:13px;color:#bbb;margin-bottom:8px}
 footer{text-align:center;color:#777;font-size:11px;padding:12px 16px 24px}
-@media(max-width:430px){main{padding:11px}.card{padding:14px}.grid{gap:7px}.choice{padding:10px;min-height:66px}}
+#notif-panel{display:none;position:fixed;top:60px;right:16px;width:300px;background:var(--panel);border:1px solid var(--line);border-radius:12px;z-index:1000;box-shadow:0 10px 30px rgba(0,0,0,0.8);max-height:400px;overflow-y:auto}
+.notif-header{padding:12px;border-bottom:1px solid var(--line);font-weight:bold;font-size:14px;display:flex;justify-content:space-between}
+#notif-list{padding:10px;font-size:13px;color:var(--muted);text-align:center}
+.notif-item{padding:8px 0;border-bottom:1px solid var(--line);color:var(--text);text-align:left}
+.choice{background:#242424;color:#f5f5f5;border:1px solid #414141;text-align:left;min-height:62px;padding:12px;border-radius:11px;font-weight:normal;width:100%;margin-bottom:8px}
+.choice.selected{border-color:var(--gold);background:#33291b}
+.choice span{display:block;font-size:14px;line-height:1.3;font-weight:700}
+.choice small{display:block;color:#aaa;font-size:11px;margin-top:4px;font-weight:normal}
+.wa-btn{display:flex; align-items:center; justify-content:center; gap:8px; background:var(--green); color:#000; padding:13px; border-radius:11px; font-weight:bold; text-decoration:none; margin-top:10px;}
 </style>
 </head>
 <body>
 <header>
   <div><div class="brand">KYRAAN</div><small>КАБИНЕТ ИСПОЛНИТЕЛЯ</small></div>
-  <span class="status" id="status">Не в сети</span>
+  <div class="header-icons">
+    <div class="bell-wrap" onclick="toggleNotifications()">
+      🔔 <span id="bell-badge" class="bell-badge">0</span>
+    </div>
+    <span class="status" id="headerStatus">Не в сети</span>
+  </div>
 </header>
+
+<div id="notif-panel">
+  <div class="notif-header">
+    <span>Уведомления</span>
+    <span style="cursor:pointer;" onclick="document.getElementById('notif-panel').style.display='none'">✖</span>
+  </div>
+  <div id="notif-list">Нет новых уведомлений</div>
+</div>
+
 <main>
-<section class="card" id="registration">
-  <span class="eyebrow">РЕГИСТРАЦИЯ</span>
-  <h1>Выберите направление</h1>
-  <p>Выберите только одно направление. После регистрации изменить его нельзя.</p>
-
-  <div class="group-title"><strong>Услуги</strong></div>
-  <div class="grid" id="services">
-    <button class="choice" data-value="cargo"><span>Грузоперевозки</span><small>Транспорт</small></button>
-    <button class="choice" data-value="evacuator"><span>Эвакуатор</span><small>Транспорт</small></button>
-    <button class="choice" data-value="manipulator"><span>Манипулятор</span><small>Транспорт</small></button>
-    <button class="choice" data-value="plumber"><span>Сантехник</span></button>
-    <button class="choice" data-value="cleaning"><span>Клининг</span></button>
-    <button class="choice" data-value="welder"><span>Сварщик</span></button>
-    <button class="choice" data-value="electrician"><span>Электрик</span></button>
-    <button class="choice" data-value="fridge"><span>Ремонт холодильников</span></button>
-    <button class="choice" data-value="washer"><span>Ремонт стиральных машин</span></button>
-    <button class="choice" data-value="tv"><span>Телемастер</span></button>
-    <button class="choice" data-value="hour"><span>Мастер на час</span></button>
-  </div>
-
-  <div class="group-title"><strong>Объявления</strong></div>
-  <div class="grid" id="ads">
-    <button class="choice" data-value="intercity"><span>Межгород такси</span><small>Объявление</small></button>
-    <button class="choice" data-value="workers"><span>Разнорабочие</span><small>Объявление</small></button>
-  </div>
-
-  <div id="extra" class="hidden">
-    <hr>
-    <h2 id="selectedTitle">Данные для связи</h2>
+  <!-- ЭКРАН ВХОДА -->
+  <section class="card" id="loginScreen">
+    <span class="eyebrow">ВХОД</span>
+    <h1>Добро пожаловать</h1>
+    <p>Введите номер телефона, указанный при регистрации.</p>
+    <label for="loginPhone">Номер телефона</label>
+    <input id="loginPhone" type="tel" placeholder="+996 700 000 000">
+    <button class="primary full" id="loginBtn">Войти в кабинет</button>
+    <button class="secondary full" id="goToRegisterBtn" style="margin-top:10px;">Я новый исполнитель (Регистрация)</button>
+  </section>
+  
+  <!-- ЭКРАН РЕГИСТРАЦИИ -->
+  <section class="card hidden" id="registration">
+    <span class="eyebrow">САМОСТОЯТЕЛЬНАЯ РЕГИСТРАЦИЯ</span>
+    <h1>Кем вы работаете?</h1>
     
-    <div id="variantWrap" class="hidden">
-      <label for="variant">Вариант транспорта</label><select id="variant"></select>
-    </div>
-    
-    <label for="personName">Ваше имя</label>
-    <input id="personName" type="text" placeholder="Например, Азамат">
-    
-    <label for="phone">Телефон / WhatsApp</label>
-    <input id="phone" type="tel" placeholder="+996...">
-
-    <!-- БЛОК ДЛЯ ВОДИТЕЛЕЙ -->
-    <div id="vehicleDocs" class="hidden" style="background:#222; padding:15px; border-radius:12px; margin-top:15px; border:1px solid #444;">
-      <h2 style="color:var(--gold); font-size:16px;">Данные автомобиля</h2>
-      <label for="plateNumber">Госномер машины</label>
-      <input id="plateNumber" type="text" placeholder="01KG123ABC">
-      
-      <label for="carPhoto">Фото машины</label>
-      <input id="carPhoto" type="file" accept="image/*" style="padding:8px; background:#333;">
-      
-      <label for="techPassport">Фото техпаспорта</label>
-      <input id="techPassport" type="file" accept="image/*" style="padding:8px; background:#333;">
+    <div style="background:#302719; border:1px solid #70501c; padding:15px; border-radius:10px; font-size:13px; color:#eee; margin-bottom:15px; line-height:1.5;">
+      ⚠️ <b>Спецтехника</b> (эвакуатор, манипулятор, грузоперевозки) и <b>Межгород такси</b> регистрируются только через Админа.
+      <br><br>
+      Отправьте фото машины и техпаспорта на наш WhatsApp:
+      <a href="https://wa.me/996704448998?text=Здравствуйте!%20Хочу%20зарегистрироваться%20как%20исполнитель%20в%20KYRAAN." target="_blank" class="wa-btn">
+        💬 Написать Админу (+996 704 448 998)
+      </a>
     </div>
 
-    <button class="primary full" id="submit">Отправить заявку</button>
-  </div>
-  <p class="note" style="margin-top:14px">Заявка будет отправлена администратору на проверку.</p>
-</section>
+    <p style="font-size:14px; color:#fff; font-weight:bold; margin-bottom:10px;">Выберите свою деятельность:</p>
 
-<section class="card hidden" id="pending">
-  <span class="eyebrow">ЗАЯВКА</span><h1>Заявка отправлена</h1>
-  <p id="pendingText"></p>
-  <div class="note">Ваша заявка на проверке. После одобрения вы сможете выходить на линию.</div>
-  <button class="secondary full" id="back">Вернуться</button>
-</section>
+    <div id="registrationChoices">
+      <button class="choice" data-value="plumber"><span>Сантехник</span><small>Бытовые услуги</small></button>
+      <button class="choice" data-value="electrician"><span>Электрик</span><small>Бытовые услуги</small></button>
+      <button class="choice" data-value="cleaning"><span>Клининг</span><small>Бытовые услуги</small></button>
+      <button class="choice" data-value="welder"><span>Сварщик</span><small>Бытовые услуги</small></button>
+      <button class="choice" data-value="fridge"><span>Ремонт холодильников</span><small>Бытовые услуги</small></button>
+      <button class="choice" data-value="washer"><span>Ремонт стиральных машин</span><small>Бытовые услуги</small></button>
+      <button class="choice" data-value="tv"><span>Телемастер</span><small>Бытовые услуги</small></button>
+      <button class="choice" data-value="hour"><span>Мастер на час</span><small>Бытовые услуги</small></button>
+      <button class="choice" data-value="workers"><span>Разнорабочий</span><small>Доска объявлений (бесплатно)</small></button>
+    </div>
 
-<section class="hidden" id="cabinet">
-  <div class="card">
-    <span class="eyebrow">КАБИНЕТ ИСПОЛНИТЕЛЯ</span>
-    <h1 id="cabinetName">Исполнитель</h1>
-    <div class="row"><button class="secondary" id="toggleOnline">Выйти на линию</button><span class="status" id="cabinetStatus">Не в сети</span></div>
-  </div>
-</section>
+    <div id="regForm" class="hidden">
+      <hr style="border:0;border-top:1px solid var(--line);margin:16px 0;">
+      <h2 id="regTitle">Данные для связи</h2>
+      
+      <label for="regName">Ваше имя</label>
+      <input id="regName" type="text" placeholder="Например, Азамат">
+      
+      <label for="regPhone">Телефон / WhatsApp</label>
+      <input id="regPhone" type="tel" placeholder="+996...">
+
+      <button class="primary full" id="submitRegBtn">Отправить заявку Админу</button>
+      <button class="secondary full" onclick="location.reload()" style="margin-top:10px;">Назад ко входу</button>
+    </div>
+  </section>
+
+  <!-- ЭКРАН ОЖИДАНИЯ -->
+  <section class="card hidden" id="pending">
+    <span class="eyebrow">ЗАЯВКА</span><h1>Заявка отправлена</h1>
+    <p id="pendingText"></p>
+    <div class="note" style="background:#302719; border:1px solid #70501c; padding:11px; border-radius:10px; color:#eee; font-size:13px;">Ваша заявка на проверке у администратора.</div>
+    <button class="secondary full" onclick="localStorage.clear(); location.reload();">Вернуться ко входу</button>
+  </section>
+
+  <!-- КАБИНЕТ -->
+  <section class="hidden" id="cabinet">
+    <div class="card">
+      <span class="eyebrow">КАБИНЕТ ИСПОЛНИТЕЛЯ</span>
+      <h1 id="cabinetName">Исполнитель</h1>
+      <p id="cabinetService" style="color:var(--gold); font-weight:bold; font-size:14px;"></p>
+      
+      <div id="subInfo" class="hidden" style="margin: 15px 0; padding: 12px; border-radius: 10px; background: #222; border: 1px solid #444;"></div>
+
+      <div class="row" id="onlineRow" style="margin-top:15px;">
+        <button class="secondary" id="toggleOnline">Выйти на линию</button>
+        <span class="status" id="cabinetStatus">Не в сети</span>
+      </div>
+      
+      <button class="secondary full" onclick="localStorage.clear(); location.reload();" style="margin-top:20px; background:#3a1c1c; color:#ff8888;">Выйти из аккаунта</button>
+    </div>
+
+    <!-- HUNTER (ЗАКАЗЫ) -->
+    <div id="hunterSection" class="hidden">
+      <div id="activeOrderCard" class="hidden">
+        <div class="card" style="border-color:var(--gold);">
+          <span class="eyebrow" style="background:var(--gold); color:#000;">У ВАС АКТИВНЫЙ ЗАКАЗ</span>
+          <h2 id="activeOrderTitle" style="margin-top:10px;"></h2>
+          <p id="activeOrderAddress" style="color:white; font-size:15px;"></p>
+          
+          <a id="activeOrderCall" href="#" class="primary full" style="display:block; text-align:center; text-decoration:none; margin-top:10px;">📞 Позвонить клиенту</a>
+          <button class="green full" id="finishOrderBtn" style="margin-top:10px;">✅ Завершить заказ</button>
+
+          <div id="paymentSection" class="hidden" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #555;">
+              <p style="color: var(--red); font-weight: bold; font-size: 14px;">⚠️ Для перехода на следующий заказ, отправьте чек об оплате на 100 сом.</p>
+              <label for="receiptPhoto">Фото чека (100 сом):</label>
+              <input id="receiptPhoto" type="file" accept="image/*" style="padding:10px; background:#333; margin-bottom:10px;">
+              <button class="primary full" id="confirmFinishBtn">Отправить чек и завершить</button>
+              <button class="secondary full" id="cancelFinishBtn" style="margin-top:5px; background:transparent; border:1px solid #555; color:#aaa;">Отмена</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="ordersListWrap" class="hidden">
+        <div style="display:flex;justify-content:space-between;margin:16px 0 9px;"><strong style="font-size:16px;">Доступные заказы</strong><span id="ordersCount" style="font-size:12px;color:var(--muted);">0</span></div>
+        <div id="ordersList"></div>
+      </div>
+    </div>
+
+    <!-- ТАКСИ -->
+    <div id="taxiSection" class="hidden">
+      <div class="card">
+        <h2>🚖 Опубликовать поездку</h2>
+        <p style="font-size:13px;">Ваша поездка появится на доске «Межгород такси».</p>
+        
+        <label for="taxiRoute">Маршрут</label>
+        <select id="taxiRoute">
+          <option value="Ош — Бишкек">Ош — Бишкек</option>
+          <option value="Бишкек — Ош">Бишкек — Ош</option>
+          <option value="Бишкек — Алматы">Бишкек — Алматы</option>
+          <option value="Алматы — Бишкек">Алматы — Бишкек</option>
+          <option value="Ош — Джалал-Абад">Ош — Джалал-Абад</option>
+        </select>
+        
+        <label for="taxiCar">Машина (марка, цвет)</label>
+        <input id="taxiCar" type="text" placeholder="Sprinter, белый">
+        
+        <label for="taxiDeparture">Дата и время выезда</label>
+        <input id="taxiDeparture" type="datetime-local">
+        
+        <label for="taxiSeats">Свободных мест</label>
+        <input id="taxiSeats" type="number" min="1" max="20" value="4">
+        
+        <button class="primary full" id="publishTripBtn">Опубликовать поездку</button>
+      </div>
+
+      <div class="card">
+        <h2>Мои поездки</h2>
+        <div id="myTripsList"></div>
+      </div>
+    </div>
+
+    <!-- РАЗНОРАБОЧИЕ -->
+    <div id="workersSection" class="hidden">
+      <div class="card">
+        <h2>👷 Моя анкета</h2>
+        <p style="font-size:13px;">Ваша анкета видна на доске «Разнорабочие» (бесплатно).</p>
+        
+        <label for="workerName">Имя</label>
+        <input id="workerName" type="text" placeholder="Азамат">
+        
+        <label for="workerSkill">Специальность</label>
+        <select id="workerSkill">
+          <option value="Грузчик">Грузчик</option>
+          <option value="Разнорабочий">Разнорабочий</option>
+          <option value="Каменщик">Каменщик</option>
+          <option value="Штукатур">Штукатур</option>
+          <option value="Плиточник">Плиточник</option>
+          <option value="Другое">Другое</option>
+        </select>
+        
+        <label for="workerCity">Город</label>
+        <input id="workerCity" type="text" placeholder="Бишкек">
+        
+        <button class="primary full" id="updateWorkerBtn">Обновить анкету</button>
+      </div>
+    </div>
+  </section>
 </main>
-<footer>KYRAAN · Интерфейсный прототип</footer>
+<footer>KYRAAN · Исполнитель</footer>
 
 <script type="module">
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
@@ -126,109 +240,579 @@ footer{text-align:center;color:#777;font-size:11px;padding:12px 16px 24px}
   const supabaseKey = 'sb_publishable_6tNocMb7Mv9HqcjVaKxDDQ_PfK1DkXe';
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  const labels={cargo:"Грузоперевозки",evacuator:"Эвакуатор",manipulator:"Манипулятор",plumber:"Сантехник",cleaning:"Клининг",welder:"Сварщик",electrician:"Электрик",fridge:"Ремонт холодильников",washer:"Ремонт стиральных машин",tv:"Телемастер",hour:"Мастер на час",intercity:"Межгород такси",workers:"Разнорабочие"};
-  const variants={cargo:["Porter","Sprinter 1-скат","1-скатная будка","1-скатный бортовой","Sprinter 2-скат","2-скатная будка","2-скатный бортовой","Гигант бортовой","Гигант будка"],evacuator:["Sprinter","Sprinter + прицеп","Atego","Atego + прицеп"],manipulator:["3 тонны — стрела 3 м","5 тонн — стрела 4 м","8 тонн — стрела 7 м","10 тонн — стрела 7 м"]};
+  const labels={workers:"Разнорабочий", cargo:"Грузоперевозки",evacuator:"Эвакуатор",manipulator:"Манипулятор",plumber:"Сантехник",cleaning:"Клининг",welder:"Сварщик",electrician:"Электрик",fridge:"Ремонт холодильников",washer:"Ремонт стиральных машин",tv:"Телемастер",hour:"Мастер на час",intercity:"Межгород такси"};
   
-  const vehicleCategories = ['cargo', 'evacuator', 'manipulator', 'intercity'];
-  
-  let selected = null;
+  const HUNTER_TYPES = ['cargo','evacuator','manipulator','plumber','cleaning','welder','electrician','fridge','washer','tv','hour'];
+  const BOARD_TAXI = ['intercity'];
+  const BOARD_WORKERS = ['workers'];
+
+  let currentExecutor = null;
+  let realtimeChannel = null;
+  let unreadCount = 0;
+  let notifications = [];
+  let selectedRegType = null;
   const $ = id => document.getElementById(id);
 
-  document.querySelectorAll(".choice").forEach(btn => btn.addEventListener("click", () => {
-    document.querySelectorAll(".choice").forEach(x => x.classList.remove("selected"));
-    btn.classList.add("selected"); 
-    selected = btn.dataset.value;
-    
-    $("extra").classList.remove("hidden"); 
-    $("selectedTitle").textContent = labels[selected];
-    
-    const hasVariants = !!variants[selected];
-    $("variantWrap").classList.toggle("hidden", !hasVariants);
-    if(hasVariants) $("variant").innerHTML = variants[selected].map(v => `<option>${v}</option>`).join("");
-    
-    $("vehicleDocs").classList.toggle("hidden", !vehicleCategories.includes(selected));
-    
-    $("extra").scrollIntoView({behavior:"smooth", block:"nearest"});
-  }));
+  document.body.addEventListener('click', () => {
+      try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); if(ctx.state === 'suspended') ctx.resume(); } catch(e) {}
+  }, { once: true });
 
-  $("back").onclick = () => { $("pending").classList.add("hidden"); $("registration").classList.remove("hidden") };
-
-  async function uploadFile(file, folder) {
-    const fileName = `${folder}/${Date.now()}_${file.name}`;
-    const { data, error } = await supabase.storage.from('kyraan_docs').upload(fileName, file);
-    if (error) throw error;
-    const { data: urlData } = supabase.storage.from('kyraan_docs').getPublicUrl(fileName);
-    return urlData.publicUrl;
-  }
-
-  $("submit").addEventListener("click", async (e) => {
-    e.preventDefault();
-    
-    if (!selected) return alert("Выберите направление");
-    
-    const personName = $("personName").value.trim() || 'Исполнитель';
-    const phone = $("phone").value.trim();
-    if (!phone) return alert("Укажите телефон");
-
-    let plate = '';
-    let carPhotoUrl = '';
-    let passportUrl = '';
-
-    if (vehicleCategories.includes(selected)) {
-      plate = $("plateNumber").value.trim();
-      const carFile = $("carPhoto").files[0];
-      const passportFile = $("techPassport").files[0];
-
-      if (!plate) return alert("Введите госномер машины");
-      if (!carFile || !passportFile) return alert("Загрузите фото машины и техпаспорта");
-
-      $("submit").textContent = "Загрузка фото...";
-      $("submit").disabled = true;
-
-      try {
-        carPhotoUrl = await uploadFile(carFile, 'cars');
-        passportUrl = await uploadFile(passportFile, 'passports');
-      } catch (err) {
-        alert("Ошибка при загрузке фото: " + err.message);
-        $("submit").textContent = "Отправить заявку";
-        $("submit").disabled = false;
-        return;
+  window.addEventListener('DOMContentLoaded', async () => {
+    const savedId = localStorage.getItem('kyraan_executor_id');
+    if (savedId) {
+      const { data } = await supabase.from('executors').select('*').eq('id', savedId).single();
+      if (data) {
+        currentExecutor = data;
+        showCabinet();
+      } else {
+        localStorage.clear();
       }
     }
+  });
 
-    $("submit").textContent = "Отправка...";
+  // ВХОД
+  $("loginBtn").addEventListener("click", async () => {
+    let phone = $("loginPhone").value.replace(/\D/g, '');
+    if (phone.length < 9) return alert("Введите корректный номер");
+    if (!phone.startsWith('996')) phone = '996' + phone.replace(/^0/, '');
+    phone = '+' + phone;
 
-    const variantSelect = $("variant");
-    const variant = variantSelect && !$("variantWrap").classList.contains("hidden") ? variantSelect.value : '';
+    const btn = $("loginBtn");
+    btn.textContent = "Поиск...";
 
-    let hunter = 'HUNTER_02';
-    if (['cargo', 'evacuator', 'manipulator'].includes(selected)) hunter = 'HUNTER_01';
-    else if (['intercity', 'workers'].includes(selected)) hunter = 'BOARD';
+    const { data, error } = await supabase.from('executors').select('*').eq('phone', phone).single();
 
-    const { error } = await supabase.from('executors').insert([{
-      name: personName,
-      phone: phone,
-      service_id: selected,
-      hunter: hunter,
-      variant_id: variant,
-      plate_number: plate,
-      tech_passport: passportUrl,
-      is_approved: false,
-      rating: 15,
-      is_online: false,
-      is_busy: false
-    }]);
-
-    if (error) {
-      alert('Ошибка базы: ' + error.message);
-      $("submit").textContent = "Отправить заявку";
-      $("submit").disabled = false;
-    } else {
-      $("registration").classList.add("hidden");
+    if (error || !data) {
+      btn.textContent = "Войти в кабинет";
+      alert("Номер не найден. Если вы регистрировались, проверьте номер.");
+    } else if (!data.is_approved) {
+      btn.textContent = "Войти в кабинет";
+      $("loginScreen").classList.add("hidden");
       $("pending").classList.remove("hidden");
-      $("pendingText").textContent = `Услуга: ${labels[selected]}${variant ? ' ('+variant+')' : ''}. Телефон: ${phone}.`;
+      $("pendingText").textContent = `Ваша заявка (${labels[data.service_id] || data.service_id}) еще не одобрена Админом.`;
+    } else {
+      localStorage.setItem('kyraan_executor_id', data.id);
+      currentExecutor = data;
+      showCabinet();
     }
   });
+
+  $("goToRegisterBtn").addEventListener("click", () => {
+    $("loginScreen").classList.add("hidden");
+    $("registration").classList.remove("hidden");
+  });
+
+  // ВЫБОР КАТЕГОРИИ ПРИ РЕГИСТРАЦИИ
+  document.querySelectorAll(".choice").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".choice").forEach(x => x.classList.remove("selected"));
+    btn.classList.add("selected");
+    selectedRegType = btn.dataset.value;
+    $("regForm").classList.remove("hidden");
+    $("regTitle").textContent = labels[selectedRegType];
+    $("regForm").scrollIntoView({behavior:"smooth", block:"nearest"});
+  }));
+
+  // РЕГИСТРАЦИЯ
+  $("submitRegBtn").addEventListener("click", async (e) => {
+    e.preventDefault();
+    if (!selectedRegType) return alert("Выберите деятельность");
+    
+    const personName = $("regName").value.trim() || 'Исполнитель';
+    const phone = $("regPhone").value.trim();
+    if (!phone) return alert("Укажите телефон");
+
+    let formattedPhone = phone.replace(/\D/g, '');
+    if (!formattedPhone.startsWith('996')) formattedPhone = '996' + formattedPhone.replace(/^0/, '');
+    formattedPhone = '+' + formattedPhone;
+
+    // Проверка дубликата
+    const { data: existing } = await supabase.from('executors').select('id').eq('phone', formattedPhone).maybeSingle();
+    if (existing) return alert("Этот номер уже зарегистрирован!");
+
+    $("submitRegBtn").textContent = "Отправка...";
+    $("submitRegBtn").disabled = true;
+
+    let hunter = HUNTER_TYPES.includes(selectedRegType) ? (['cargo','evacuator','manipulator'].includes(selectedRegType) ? 'HUNTER_01' : 'HUNTER_02') : 'BOARD';
+
+    const { data, error } = await supabase.from('executors').insert([{
+      name: personName, phone: formattedPhone, service_id: selectedRegType, hunter: hunter,
+      variant_id: selectedRegType === 'workers' ? 'Разнорабочий' : null,
+      is_approved: false, rating: 15, is_online: false, is_busy: false, is_active: true
+    }]).select().single();
+
+    if (error) {
+      alert('Ошибка: ' + error.message);
+      $("submitRegBtn").textContent = "Отправить заявку Админу";
+      $("submitRegBtn").disabled = false;
+    } else {
+      localStorage.setItem('kyraan_executor_id', data.id);
+      $("registration").classList.add("hidden");
+      $("pending").classList.remove("hidden");
+      $("pendingText").textContent = `Ваша заявка (${labels[selectedRegType]}) отправлена Админу. Ожидайте одобрения.`;
+    }
+  });
+
+  // УВЕДОМЛЕНИЯ
+  window.playAlarm = function() {
+      if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500]);
+      try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          const ctx = new AudioContext();
+          const osc = ctx.createOscillator();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(800, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.5);
+          osc.connect(ctx.destination);
+          osc.start(); osc.stop(ctx.currentTime + 0.5);
+      } catch(e) { console.log('Нет звука', e); }
+
+      if (Notification.permission === "granted") {
+          new Notification("🚨 НОВЫЙ ЗАКАЗ!", {
+              body: "Откройте приложение KYRAAN и примите заказ.",
+              vibrate: [500, 200, 500, 200, 500],
+              requireInteraction: true
+          });
+      }
+  }
+
+  window.toggleNotifications = function() {
+      const panel = document.getElementById('notif-panel');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      if (panel.style.display === 'block') {
+          unreadCount = 0;
+          document.getElementById('bell-badge').style.display = 'none';
+      }
+  }
+
+  window.addNotification = function(text) {
+      notifications.unshift(text);
+      if (notifications.length > 10) notifications.pop();
+      
+      unreadCount++;
+      const badge = document.getElementById('bell-badge');
+      badge.textContent = unreadCount;
+      badge.style.display = 'block';
+
+      const list = document.getElementById('notif-list');
+      list.style.textAlign = 'left';
+      list.innerHTML = notifications.map(n => `<div class="notif-item">${n}</div>`).join('');
+      
+      playAlarm();
+  }
+
+  function showCabinet() {
+    $("loginScreen").classList.add("hidden");
+    $("registration").classList.add("hidden");
+    $("pending").classList.add("hidden");
+    $("cabinet").classList.remove("hidden");
+    
+    $("cabinetName").textContent = currentExecutor.name;
+    $("cabinetService").textContent = labels[currentExecutor.service_id] || currentExecutor.service_id;
+    
+    if (HUNTER_TYPES.includes(currentExecutor.service_id)) {
+      $("hunterSection").classList.remove("hidden");
+      $("onlineRow").classList.remove("hidden");
+      $("taxiSection").classList.add("hidden");
+      $("workersSection").classList.add("hidden");
+      updateStatusUI();
+      loadOrders();
+      setupRealtime();
+      
+    } else if (BOARD_TAXI.includes(currentExecutor.service_id)) {
+      $("hunterSection").classList.add("hidden");
+      $("onlineRow").classList.add("hidden");
+      $("taxiSection").classList.remove("hidden");
+      $("workersSection").classList.add("hidden");
+      $("headerStatus").textContent = "Таксист";
+      $("headerStatus").className = "status";
+      updateSubInfo();
+      loadMyTrips();
+      
+    } else if (BOARD_WORKERS.includes(currentExecutor.service_id)) {
+      $("hunterSection").classList.add("hidden");
+      $("onlineRow").classList.add("hidden");
+      $("taxiSection").classList.add("hidden");
+      $("workersSection").classList.remove("hidden");
+      $("headerStatus").textContent = "Рабочий";
+      $("headerStatus").className = "status";
+      loadWorkerProfile();
+    }
+  }
+
+  // ============================ ТАКСИ ============================
+  function updateSubInfo() {
+    $("subInfo").classList.remove("hidden");
+    
+    let subUntil;
+    if (currentExecutor.sub_until) {
+        subUntil = new Date(currentExecutor.sub_until);
+    } else {
+        subUntil = new Date(new Date(currentExecutor.created_at).getTime() + 30 * 24 * 60 * 60 * 1000);
+    }
+    
+    const now = new Date();
+    
+    if (subUntil < now) {
+        $("subInfo").innerHTML = `
+            <div style="color:var(--red); font-weight:bold; margin-bottom:10px;">
+                ⚠️ Подписка истекла!<br>Оплатите 100 сом для продления на 30 дней.
+            </div>
+            <input type="file" id="subReceipt" accept="image/*" style="margin-bottom:10px; background:#333; padding:10px; border-radius:8px;">
+            <button class="primary full" id="paySubBtn">Оплатить 100 сом</button>
+        `;
+        setTimeout(() => {
+          const pBtn = document.getElementById('publishTripBtn');
+          if (pBtn) { pBtn.disabled = true; pBtn.textContent = "Подписка истекла"; }
+        }, 50);
+        
+        document.getElementById('paySubBtn').addEventListener('click', paySubscription);
+    } else {
+        const daysLeft = Math.ceil((subUntil - now) / (1000 * 60 * 60 * 24));
+        $("subInfo").innerHTML = `
+            <div style="color:var(--green); font-weight:bold;">
+                ✅ Подписка активна. Осталось дней: ${daysLeft}
+            </div>
+        `;
+    }
+  }
+
+  async function paySubscription() {
+    const file = document.getElementById('subReceipt').files[0];
+    if (!file) return alert("Прикрепите фото чека об оплате!");
+    
+    const btn = document.getElementById('paySubBtn');
+    btn.textContent = "Загрузка...";
+    btn.disabled = true;
+    
+    try {
+        const fileName = `receipts/sub_${Date.now()}_${currentExecutor.id}.jpg`;
+        await supabase.storage.from('kyraan_docs').upload(fileName, file);
+        const { data: urlData } = supabase.storage.from('kyraan_docs').getPublicUrl(fileName);
+        
+        const newDate = new Date();
+        newDate.setDate(newDate.getDate() + 30);
+        
+        await supabase.from('executors').update({
+            sub_until: newDate.toISOString(),
+            tech_passport: urlData.publicUrl 
+        }).eq('id', currentExecutor.id);
+        
+        currentExecutor.sub_until = newDate.toISOString();
+        alert("✅ Оплата принята! Подписка продлена на 30 дней.");
+        updateSubInfo();
+        const pBtn = document.getElementById('publishTripBtn');
+        if (pBtn) { pBtn.disabled = false; pBtn.textContent = "Опубликовать поездку"; }
+    } catch (e) {
+        alert("Ошибка: " + e.message);
+        btn.textContent = "Оплатить 100 сом";
+        btn.disabled = false;
+    }
+  }
+
+  async function loadMyTrips() {
+    const { data, error } = await supabase.from('taxi_trips')
+      .select('*')
+      .eq('phone1', currentExecutor.phone)
+      .order('departure_at', { ascending: false });
+      
+    const list = document.getElementById('myTripsList');
+    
+    if (error) { list.innerHTML = 'Ошибка: ' + error.message; return; }
+    if (!data || data.length === 0) { 
+      list.innerHTML = '<p style="text-align:center;">У вас пока нет опубликованных поездок.</p>'; 
+      return; 
+    }
+    
+    list.innerHTML = data.map(t => `
+      <div class="order-card">
+        <div class="order-title">${t.route}</div>
+        <div class="order-desc">🚗 ${t.car} · 👥 ${t.seats} мест</div>
+        <div class="order-desc">🕐 ${new Date(t.departure_at).toLocaleString('ru-RU')}</div>
+        <button class="secondary full" style="margin-top:0; color:var(--red);" onclick="deleteTrip('${t.id}')">Удалить</button>
+      </div>
+    `).join('');
+  }
+
+  window.deleteTrip = async function(id) {
+    if (!confirm("Удалить эту поездку?")) return;
+    const { error } = await supabase.from('taxi_trips').delete().eq('id', id);
+    if (error) alert('Ошибка: ' + error.message);
+    else { loadMyTrips(); alert('Удалено'); }
+  }
+
+  $("publishTripBtn").addEventListener("click", async () => {
+    const route = $("taxiRoute").value;
+    const car = $("taxiCar").value.trim();
+    const departure = $("taxiDeparture").value;
+    const seats = parseInt($("taxiSeats").value) || 4;
+    
+    if (!car) return alert("Укажите машину");
+    if (!departure) return alert("Укажите дату и время");
+    
+    $("publishTripBtn").textContent = "Публикация...";
+    $("publishTripBtn").disabled = true;
+    
+    const { error } = await supabase.from('taxi_trips').insert([{
+      route: route,
+      driver_name: currentExecutor.name,
+      phone1: currentExecutor.phone,
+      car: car,
+      departure_at: new Date(departure).toISOString(),
+      seats: seats,
+      status: 'active',
+      is_direct: true
+    }]);
+    
+    $("publishTripBtn").textContent = "Опубликовать поездку";
+    $("publishTripBtn").disabled = false;
+    
+    if (error) {
+      alert("Ошибка: " + error.message);
+    } else {
+      $("taxiCar").value = "";
+      $("taxiDeparture").value = "";
+      alert("✅ Поездка опубликована!");
+      loadMyTrips();
+    }
+  });
+
+  // ============================ РАБОЧИЕ ============================
+  async function loadWorkerProfile() {
+    const { data } = await supabase.from('workers_listings')
+      .select('*')
+      .eq('phone1', currentExecutor.phone)
+      .limit(1);
+      
+    if (data && data.length > 0) {
+      $("workerName").value = data[0].author_name || currentExecutor.name;
+      $("workerSkill").value = data[0].skill || 'Разнорабочий';
+      $("workerCity").value = data[0].city || '';
+    }
+  }
+
+  $("updateWorkerBtn").addEventListener("click", async () => {
+    const name = $("workerName").value.trim();
+    const skill = $("workerSkill").value;
+    const city = $("workerCity").value.trim();
+    
+    if (!name) return alert("Введите имя");
+    
+    $("updateWorkerBtn").textContent = "Сохранение...";
+    $("updateWorkerBtn").disabled = true;
+    
+    const { data: existing } = await supabase.from('workers_listings')
+      .select('id')
+      .eq('phone1', currentExecutor.phone)
+      .limit(1);
+    
+    let error;
+    
+    if (existing && existing.length > 0) {
+      const res = await supabase.from('workers_listings').update({
+        author_name: name, skill: skill, city: city, title: skill
+      }).eq('id', existing[0].id);
+      error = res.error;
+    } else {
+      const res = await supabase.from('workers_listings').insert([{
+        author_name: name, phone1: currentExecutor.phone,
+        skill: skill, title: skill, city: city, status: 'active'
+      }]);
+      error = res.error;
+    }
+    
+    $("updateWorkerBtn").textContent = "Обновить анкету";
+    $("updateWorkerBtn").disabled = false;
+    
+    if (error) alert("Ошибка: " + error.message);
+    else alert("✅ Анкета сохранена!");
+  });
+
+  // ============================ HUNTER (ЗАКАЗЫ) ============================
+  function updateStatusUI() {
+    const isOnline = currentExecutor.is_online;
+    const isBusy = currentExecutor.is_busy;
+    
+    $("headerStatus").textContent = isBusy ? "Выполняет заказ" : (isOnline ? "На линии" : "Не в сети");
+    $("headerStatus").className = "status " + (isBusy ? "busy" : (isOnline ? "on" : ""));
+    
+    $("cabinetStatus").textContent = isBusy ? "Занят" : (isOnline ? "На линии" : "Не в сети");
+    $("cabinetStatus").className = "status " + (isBusy ? "busy" : (isOnline ? "on" : ""));
+    
+    $("toggleOnline").textContent = isOnline ? "Уйти с линии" : "Выйти на линию";
+    $("toggleOnline").className = isOnline ? "red" : "secondary";
+    $("toggleOnline").disabled = isBusy;
+    
+    if (isBusy) {
+      $("activeOrderCard").classList.remove("hidden");
+      $("ordersListWrap").classList.add("hidden");
+      loadActiveOrder();
+    } else {
+      $("activeOrderCard").classList.add("hidden");
+      $("ordersListWrap").classList.remove("hidden");
+      $("paymentSection").classList.add("hidden");
+      $("finishOrderBtn").classList.remove("hidden");
+      $("receiptPhoto").value = "";
+    }
+  }
+
+  $("toggleOnline").addEventListener("click", async () => {
+    const newState = !currentExecutor.is_online;
+    
+    if (newState && Notification.permission === "default") {
+        await Notification.requestPermission();
+    }
+
+    const { error } = await supabase.from('executors').update({ is_online: newState }).eq('id', currentExecutor.id);
+    if (!error) {
+      currentExecutor.is_online = newState;
+      updateStatusUI();
+      if (newState) loadOrders(); 
+      else $("ordersList").innerHTML = '<p style="text-align:center;">Вы не на линии.</p>';
+    }
+  });
+
+  async function loadOrders() {
+    if (!currentExecutor.is_online) {
+      $("ordersList").innerHTML = '<p style="text-align:center;">Вы не на линии. Заказы скрыты.</p>';
+      return;
+    }
+    
+    const { data, error } = await supabase.from('orders')
+      .select('*')
+      .eq('service_id', currentExecutor.service_id)
+      .is('executor_id', null)
+      .order('created_at', { ascending: false });
+
+    if (error) { $("ordersList").innerHTML = "Ошибка: " + error.message; return; }
+    
+    $("ordersCount").textContent = data.length;
+    
+    if (data.length === 0) {
+      $("ordersList").innerHTML = '<p style="text-align:center;">Пока нет новых заказов по вашей специальности.</p>';
+      return;
+    }
+
+    $("ordersList").innerHTML = data.map(o => `
+      <div class="order-card">
+        <div class="order-title">Заказ #${o.id.split('-')[0].toUpperCase()}</div>
+        <div class="order-desc">📍 ${o.address || 'Адрес уточняется'}</div>
+        <button class="primary full" style="margin-top:0;" onclick="takeOrder('${o.id}')">Принять заказ</button>
+      </div>
+    `).join('');
+  }
+
+  window.takeOrder = async (orderId) => {
+    if (currentExecutor.is_busy) return alert("Сначала завершите текущий заказ!");
+    
+    $("ordersList").innerHTML = '<p style="text-align:center;">Берем заказ...</p>';
+    
+    const { data, error } = await supabase.from('orders')
+      .update({ executor_id: currentExecutor.id, status: 'TAKEN' })
+      .eq('id', orderId)
+      .is('executor_id', null) 
+      .select();
+
+    if (error) {
+      alert("Ошибка: " + error.message);
+      loadOrders();
+    } else if (!data || data.length === 0) {
+      alert("Упс! Этот заказ только что забрал кто-то другой.");
+      loadOrders();
+    } else {
+      await supabase.from('executors').update({ is_busy: true }).eq('id', currentExecutor.id);
+      currentExecutor.is_busy = true;
+      updateStatusUI();
+    }
+  };
+
+  async function loadActiveOrder() {
+    const { data } = await supabase.from('orders')
+      .select('*')
+      .eq('executor_id', currentExecutor.id)
+      .neq('status', 'DONE')
+      .single();
+      
+    if (data) {
+      $("activeOrderTitle").textContent = `Заказ #${data.id.split('-')[0].toUpperCase()}`;
+      $("activeOrderAddress").textContent = `📍 ${data.address || 'Адрес уточняется'}`;
+      $("activeOrderCall").href = `tel:${data.client_phone}`;
+    }
+  }
+
+  $("finishOrderBtn").addEventListener("click", () => {
+      $("finishOrderBtn").classList.add("hidden");
+      $("paymentSection").classList.remove("hidden");
+  });
+
+  $("cancelFinishBtn").addEventListener("click", () => {
+      $("paymentSection").classList.add("hidden");
+      $("finishOrderBtn").classList.remove("hidden");
+      $("receiptPhoto").value = "";
+  });
+
+  $("confirmFinishBtn").addEventListener("click", async () => {
+    const file = $("receiptPhoto").files[0];
+    if (!file) return alert("⚠️ Прикрепите фото чека на 100 сом!");
+
+    $("confirmFinishBtn").textContent = "Загрузка чека...";
+    $("confirmFinishBtn").disabled = true;
+
+    try {
+        const fileName = `receipts/order_${Date.now()}_${currentExecutor.id}.jpg`;
+        const { error: uploadError } = await supabase.storage.from('kyraan_docs').upload(fileName, file);
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage.from('kyraan_docs').getPublicUrl(fileName);
+        const receiptUrl = urlData.publicUrl;
+
+        const { data: order } = await supabase.from('orders')
+            .select('id, address')
+            .eq('executor_id', currentExecutor.id)
+            .neq('status', 'DONE')
+            .single();
+
+        if (order) {
+            await supabase.from('orders').update({
+                status: 'DONE',
+                address: `${order.address || 'Адрес не указан'} | ЧЕК: ${receiptUrl}`
+            }).eq('id', order.id);
+        }
+
+        await supabase.from('executors').update({ is_busy: false }).eq('id', currentExecutor.id);
+        currentExecutor.is_busy = false;
+
+        $("paymentSection").classList.add("hidden");
+        $("finishOrderBtn").classList.remove("hidden");
+        $("confirmFinishBtn").textContent = "Отправить чек и завершить";
+        $("confirmFinishBtn").disabled = false;
+        $("receiptPhoto").value = "";
+
+        updateStatusUI();
+        loadOrders();
+        alert("✅ Чек отправлен! Заказ завершен.");
+
+    } catch (err) {
+        alert("Ошибка при загрузке чека: " + err.message);
+        $("confirmFinishBtn").textContent = "Отправить чек и завершить";
+        $("confirmFinishBtn").disabled = false;
+    }
+  });
+
+  function setupRealtime() {
+    if (realtimeChannel) return; 
+    
+    realtimeChannel = supabase.channel('executor-orders')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
+          const newOrder = payload.new;
+          if (newOrder.service_id === currentExecutor.service_id && !newOrder.executor_id) {
+              window.addNotification(`🔔 Новый заказ #${newOrder.id.split('-')[0].toUpperCase()}`);
+              if (currentExecutor.is_online && !currentExecutor.is_busy) {
+                  loadOrders();
+              }
+          }
+      }).subscribe();
+  }
+
 </script>
 </body>
-</html>
+  </html>
