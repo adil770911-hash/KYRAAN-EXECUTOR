@@ -195,7 +195,6 @@ input:checked + .slider:before { transform: translateX(20px); }
       <button class="choice" data-value="hour"><span>Мастер на час</span><small>Бытовые услуги</small></button>
       <button class="choice" data-value="workers"><span>Разнорабочий</span><small>Доска объявлений (бесплатно)</small></button>
       
-      <!-- Спецтехника (через админа) -->
       <button class="choice" data-value="evacuator"><span>🚨 Эвакуатор</span><small>Спецтехника · через Админа</small></button>
       <button class="choice" data-value="manipulator"><span>🏗 Манипулятор</span><small>Спецтехника · через Админа</small></button>
       <button class="choice" data-value="cargo"><span>🚚 Грузоперевозки</span><small>Спецтехника · через Админа</small></button>
@@ -251,13 +250,23 @@ input:checked + .slider:before { transform: translateX(20px); }
       <button class="btn-status on" id="btnH2Online" onclick="toggleOnlineStatus(true)">🟢 Выйти на линию</button>
     </div>
 
-    <!-- Блок с кнопками статуса Hunter 1 (Две кнопки, как на скрине) -->
+    <!-- Блок с кнопками статуса Hunter 1 (Две кнопки) -->
     <div class="status-btns-h1 hidden" id="hunter1Buttons">
       <button class="btn-h1 red" id="btnH1Red" onclick="toggleOnlineStatus(false)">⏻ Уйти с линии</button>
       <button class="btn-h1 green" id="btnH1Green" onclick="toggleOnlineStatus(true)">⏺ На линии</button>
     </div>
 
-    <!-- Подсказка (Показывается всем Hunter'ам) -->
+    <!-- ОКНО ВВОДА КОДА ИЗ WHATSAPP -->
+    <div class="card hidden" id="codeClaimSection" style="border-color: var(--gold); background: #1f1b10; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(245,166,35,0.1);">
+        <h2 style="font-size: 16px; color: var(--gold); margin-bottom: 5px;">Взять заказ по коду</h2>
+        <p style="font-size: 12px; margin-bottom: 10px; color: #ccc;">Введите код из группы WhatsApp (например, #A3F2).</p>
+        <div class="row">
+            <input type="text" id="waCodeInput" placeholder="#A3F2" style="text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">
+            <button class="primary" id="claimCodeBtn" onclick="claimByCode()" style="flex: 0 0 auto; width: 80px;">ОК</button>
+        </div>
+    </div>
+
+    <!-- Подсказка -->
     <div class="info-hint hidden" id="onlineHint">
       <div class="icon">💡</div>
       <div>Вы на линии? Можете спокойно смотреть YouTube, сидеть в WhatsApp или Instagram. Заказы всё равно придут с уведомлением!</div>
@@ -276,12 +285,19 @@ input:checked + .slider:before { transform: translateX(20px); }
           <a id="activeOrderCall" href="#" class="call-btn">📞 Позвонить клиенту</a>
           <button class="finish-btn" id="finishOrderBtn">✅ Завершить заказ</button>
 
-          <!-- Блок оплаты 100 сом -->
+          <!-- Блок оплаты -->
           <div id="paymentSection" class="hidden" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #555;">
-              <p style="color: var(--red); font-weight: bold; font-size: 13px;">⚠️ Для перехода на следующий заказ, отправьте чек об оплате на 100 сом.</p>
+              
+              <!-- QR-код -->
+              <div style="text-align: center; margin-bottom: 15px;">
+                  <p style="color: var(--red); font-weight: bold; font-size: 13px; margin-bottom: 10px;">⚠️ Для перехода на следующий заказ, оплатите 100 сом и прикрепите чек.</p>
+                  <img id="qrCodeImg" src="" style="max-width: 200px; border-radius: 12px; display: none; border: 2px solid var(--gold); margin: 0 auto;">
+              </div>
+
               <label for="receiptPhoto" style="font-size:12px; color:#aaa;">Фото чека (100 сом):</label>
               <input id="receiptPhoto" type="file" accept="image/*" style="padding:10px; background:#222; border:1px solid #444; margin-bottom:10px; color:#fff;">
-              <button class="primary full" id="confirmFinishBtn">Отправить чек и завершить</button>
+              
+              <button class="primary full" id="confirmFinishBtn">Отправить чек и стать на линию</button>
               <button class="secondary full" id="cancelFinishBtn" style="margin-top:5px; background:transparent; border:1px solid #555; color:#aaa;">Отмена</button>
           </div>
         </div>
@@ -297,7 +313,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       </div>
     </div>
 
-    <!-- Межгород Такси (без изменений) -->
+    <!-- Межгород Такси -->
     <div id="taxiSection" class="hidden">
       <div class="card">
         <h2>🚖 Опубликовать поездку</h2>
@@ -383,8 +399,8 @@ input:checked + .slider:before { transform: translateX(20px); }
   };
   
   const HUNTER_TYPES = ['cargo','evacuator','manipulator','plumber','cleaning','welder','electrician','fridge','washer','tv','hour'];
-  const HUNTER1_TYPES = ['cargo','evacuator','manipulator']; // Спецтехника
-  const HUNTER2_TYPES = ['plumber','cleaning','welder','electrician','fridge','washer','tv','hour']; // Быт. услуги
+  const HUNTER1_TYPES = ['cargo','evacuator','manipulator'];
+  const HUNTER2_TYPES = ['plumber','cleaning','welder','electrician','fridge','washer','tv','hour'];
   
   const BOARD_TAXI = ['intercity'];
   const BOARD_WORKERS = ['workers'];
@@ -402,13 +418,11 @@ input:checked + .slider:before { transform: translateX(20px); }
   let selectedRegType = null;
   let notifications = [];
   
-  // Настройки уведомлений
   let notifSoundEnabled = localStorage.getItem('kyraan_notif_sound') !== 'false'; 
   let audioCtx = null;
 
   const $ = id => document.getElementById(id);
 
-  // Инициализация настроек звука
   $("soundToggle").checked = notifSoundEnabled;
 
   window.changeNotifMode = function() {
@@ -425,7 +439,6 @@ input:checked + .slider:before { transform: translateX(20px); }
     return '+996' + digits;
   }
 
-  // Глобальный контекст для звука
   document.body.addEventListener('click', () => {
       try { 
           if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -610,25 +623,22 @@ input:checked + .slider:before { transform: translateX(20px); }
     $("cabOrdersCount").textContent = doneCount;
     $("cabStatReviews").textContent = doneCount;
     
-    // Убираем все возможные блоки перед настройкой
     $("hunter2Buttons").classList.add("hidden");
     $("hunter1Buttons").classList.add("hidden");
     $("hunter1Badge").classList.add("hidden");
     $("profileCover").classList.remove("h1-cover");
-    $("onlineHint").classList.add("hidden"); // Скрываем подсказку по умолчанию
+    $("onlineHint").classList.add("hidden");
     
     if (HUNTER_TYPES.includes(currentExecutor.service_id)) {
       $("hunterSection").classList.remove("hidden");
+      $("codeClaimSection").classList.remove("hidden"); // Показываем поле ввода кода
 
-      // Разделяем логику Hunter 1 и Hunter 2
       if (HUNTER1_TYPES.includes(currentExecutor.service_id)) {
-        // Hunter 1 (Спецтехника)
         $("hunter1Badge").classList.remove("hidden");
         $("hunter1Buttons").classList.remove("hidden");
         $("profileCover").classList.add("h1-cover");
         $("ordersListTitle").textContent = "Доступные заказы";
       } else {
-        // Hunter 2 (Бытовые услуги)
         $("hunter2Buttons").classList.remove("hidden");
         $("ordersListTitle").textContent = "🔥 Новые заказы";
       }
@@ -639,6 +649,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       
     } else if (BOARD_TAXI.includes(currentExecutor.service_id)) {
       $("hunterSection").classList.add("hidden");
+      $("codeClaimSection").classList.add("hidden");
       $("taxiSection").classList.remove("hidden");
       $("headerStatus").textContent = "Таксист";
       $("headerStatus").className = "status";
@@ -646,6 +657,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       
     } else if (BOARD_WORKERS.includes(currentExecutor.service_id)) {
       $("hunterSection").classList.add("hidden");
+      $("codeClaimSection").classList.add("hidden");
       $("workersSection").classList.remove("hidden");
       $("headerStatus").textContent = "Рабочий";
       $("headerStatus").className = "status";
@@ -657,11 +669,16 @@ input:checked + .slider:before { transform: translateX(20px); }
     const isOnline = currentExecutor.is_online;
     const isBusy = currentExecutor.is_busy;
     
-    // Верхний статус
+    // Скрываем поле ввода кода, если водитель занят
+    if (isBusy) {
+        $("codeClaimSection").classList.add("hidden");
+    } else {
+        $("codeClaimSection").classList.remove("hidden");
+    }
+
     $("headerStatus").textContent = isBusy ? "Выполняет" : (isOnline ? "На линии" : "Не в сети");
     $("headerStatus").className = "status " + (isBusy ? "busy" : (isOnline ? "on" : ""));
     
-    // ЛОГИКА ДЛЯ HUNTER 1 (ДВЕ КНОПКИ)
     if (HUNTER1_TYPES.includes(currentExecutor.service_id)) {
       if (isBusy) {
         $("btnH1Red").disabled = true;
@@ -674,18 +691,17 @@ input:checked + .slider:before { transform: translateX(20px); }
         $("btnH1Green").disabled = false;
         $("btnH1Green").innerHTML = "⏺ На линии";
         $("btnH1Red").classList.remove("active");
-        $("btnH1Green").classList.add("active"); // Зеленая горит
-        $("onlineHint").classList.remove("hidden"); // Показываем подсказку
+        $("btnH1Green").classList.add("active");
+        $("onlineHint").classList.remove("hidden");
       } else {
         $("btnH1Red").disabled = false;
         $("btnH1Green").disabled = false;
         $("btnH1Green").innerHTML = "⏺ На линии";
-        $("btnH1Red").classList.add("active"); // Красная горит
+        $("btnH1Red").classList.add("active");
         $("btnH1Green").classList.remove("active");
-        $("onlineHint").classList.add("hidden"); // Скрываем подсказку
+        $("onlineHint").classList.add("hidden");
       }
     } 
-    // ЛОГИКА ДЛЯ HUNTER 2 (ОДНА КНОПКА)
     else if (HUNTER2_TYPES.includes(currentExecutor.service_id)) {
       if (isBusy) {
         $("btnH2Offline").classList.add("hidden");
@@ -697,18 +713,17 @@ input:checked + .slider:before { transform: translateX(20px); }
       } else if (isOnline) {
         $("btnH2Offline").classList.remove("hidden");
         $("btnH2Online").classList.add("hidden");
-        $("onlineHint").classList.remove("hidden"); // Показываем подсказку
+        $("onlineHint").classList.remove("hidden");
       } else {
         $("btnH2Offline").classList.add("hidden");
         $("btnH2Online").classList.remove("hidden");
         $("btnH2Online").textContent = "🟢 Выйти на линию";
         $("btnH2Online").disabled = false;
         $("btnH2Online").className = "btn-status on";
-        $("onlineHint").classList.add("hidden"); // Скрываем подсказку
+        $("onlineHint").classList.add("hidden");
       }
     }
     
-    // Отображение заказов
     if (isBusy) {
       $("activeOrderCard").classList.remove("hidden");
       $("ordersListWrap").classList.add("hidden");
@@ -723,7 +738,6 @@ input:checked + .slider:before { transform: translateX(20px); }
     }
   }
 
-  // Обновленная функция переключения статуса
   window.toggleOnlineStatus = async (desiredState) => {
     if (currentExecutor.is_busy) return alert("Сначала завершите заказ!");
     if (currentExecutor.is_online === desiredState) return;
@@ -739,7 +753,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       updateStatusUI();
       if (desiredState) {
           loadOrders(); 
-          playAlarm(); // Тестовый сигнал
+          playAlarm(); 
       } else {
           $("ordersList").innerHTML = '';
       }
@@ -766,7 +780,6 @@ input:checked + .slider:before { transform: translateX(20px); }
       const isH1 = HUNTER1_TYPES.includes(currentExecutor.service_id);
       
       if (isH1) {
-        // ПУСТОЕ СОСТОЯНИЕ ДЛЯ HUNTER 1 (Грузовики)
         $("ordersList").innerHTML = `
           <div class="empty-state">
             <img src="https://cdn-icons-png.flaticon.com/512/2830/2830284.png" class="empty-state-img" alt="Нет заказов" style="filter: drop-shadow(0 0 10px rgba(245,166,35,0.3)); max-width: 180px;">
@@ -778,7 +791,6 @@ input:checked + .slider:before { transform: translateX(20px); }
           </div>
         `;
       } else {
-        // ПУСТОЕ СОСТОЯНИЕ ДЛЯ HUNTER 2 (Инструменты)
         $("ordersList").innerHTML = `
           <div class="empty-state">
             <img src="https://cdn-icons-png.flaticon.com/512/4697/4697285.png" class="empty-state-img" alt="Нет заказов">
@@ -837,6 +849,50 @@ input:checked + .slider:before { transform: translateX(20px); }
     }
   };
 
+  // ВЗЯТЬ ЗАКАЗ ПО КОДУ
+  window.claimByCode = async function() {
+    if (!currentExecutor.is_online) return alert("Сначала выйдите на линию!");
+    if (currentExecutor.is_busy) return alert("Сначала завершите текущий заказ!");
+
+    const code = document.getElementById('waCodeInput').value.trim();
+    if (!code) return alert("Введите код заказа!");
+
+    const btn = document.getElementById('claimCodeBtn');
+    btn.textContent = '...';
+    btn.disabled = true;
+
+    try {
+        const { data, error } = await supabase.rpc('claim_order_by_code', {
+            p_code: code,
+            p_executor_id: currentExecutor.id
+        });
+
+        if (error) throw error;
+
+        if (!data.ok) {
+            const msgs = {
+                not_found: '⛔ Заказ не найден или уже взят другим водителем.',
+                wrong_service: '⛔ Этот заказ не для вашей услуги (вы не можете его взять).',
+                already_taken: '⛔ Уже взят другим водителем.',
+                invalid_code: '⛔ Неверный код.',
+                no_executor: '⛔ Вы не найдены в базе.'
+            };
+            alert(msgs[data.reason] || 'Не удалось взять заказ');
+        } else {
+            playAlarm();
+            document.getElementById('waCodeInput').value = '';
+            await supabase.from('executors').update({ is_busy: true }).eq('id', currentExecutor.id);
+            currentExecutor.is_busy = true;
+            updateStatusUI();
+        }
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    } finally {
+        btn.textContent = 'ОК';
+        btn.disabled = false;
+    }
+  };
+
   async function loadActiveOrder() {
     const { data } = await supabase.from('orders')
       .select('*')
@@ -851,9 +907,21 @@ input:checked + .slider:before { transform: translateX(20px); }
     }
   }
 
-  $("finishOrderBtn").addEventListener("click", () => {
+  // ЗАВЕРШЕНИЕ ЗАКАЗА И QR-КОД
+  $("finishOrderBtn").addEventListener("click", async () => {
       $("finishOrderBtn").style.display = "none";
       $("paymentSection").classList.remove("hidden");
+
+      const qrKey = HUNTER1_TYPES.includes(currentExecutor.service_id) ? 'qr_hunter1' : 'qr_hunter2';
+      const { data } = await supabase.from('app_settings').select('setting_value').eq('setting_name', qrKey).single();
+      
+      if (data && data.setting_value) {
+          $("qrCodeImg").src = data.setting_value;
+          $("qrCodeImg").style.display = "block";
+      } else {
+          $("qrCodeImg").src = "https://via.placeholder.com/200x200.png?text=QR+Code"; 
+          $("qrCodeImg").style.display = "block";
+      }
   });
 
   $("cancelFinishBtn").addEventListener("click", () => {
@@ -883,17 +951,18 @@ input:checked + .slider:before { transform: translateX(20px); }
             await supabase.from('orders').update({ status: 'DONE', address: `${order.address || 'Адрес не указан'} | ЧЕК: ${receiptUrl}` }).eq('id', order.id);
         }
 
-        await supabase.from('executors').update({ is_busy: false }).eq('id', currentExecutor.id);
+        await supabase.from('executors').update({ is_busy: false, is_online: true }).eq('id', currentExecutor.id);
         currentExecutor.is_busy = false;
+        currentExecutor.is_online = true;
 
         updateStatusUI();
         loadOrders();
-        alert("✅ Чек отправлен! Заказ завершен.");
+        alert("✅ Чек отправлен! Заказ завершен. Вы снова на линии.");
 
     } catch (err) {
         alert("Ошибка при загрузке чека: " + err.message);
     } finally {
-        $("confirmFinishBtn").textContent = "Отправить чек и завершить";
+        $("confirmFinishBtn").textContent = "Отправить чек и стать на линию";
         $("confirmFinishBtn").disabled = false;
     }
   });
@@ -920,7 +989,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       }).subscribe();
   }
 
-  // ТАКСИ (БЕЗ ИЗМЕНЕНИЙ)
+  // ТАКСИ
   async function loadMyTrips() {
     const { data } = await supabase.from('taxi_trips').select('*').eq('phone1', currentExecutor.phone).order('departure_at', { ascending: false });
     const list = document.getElementById('myTripsList');
@@ -987,4 +1056,4 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 </script>
 </body>
-        </html>
+  </html>
