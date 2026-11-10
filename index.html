@@ -288,7 +288,6 @@ input:checked + .slider:before { transform: translateX(20px); }
           <!-- Блок оплаты -->
           <div id="paymentSection" class="hidden" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #555;">
               
-              <!-- QR-код -->
               <div style="text-align: center; margin-bottom: 15px;">
                   <p style="color: var(--red); font-weight: bold; font-size: 13px; margin-bottom: 10px;">⚠️ Для перехода на следующий заказ, оплатите 100 сом и прикрепите чек.</p>
                   <img id="qrCodeImg" src="" style="max-width: 200px; border-radius: 12px; display: none; border: 2px solid var(--gold); margin: 0 auto;">
@@ -631,16 +630,16 @@ input:checked + .slider:before { transform: translateX(20px); }
     
     if (HUNTER_TYPES.includes(currentExecutor.service_id)) {
       $("hunterSection").classList.remove("hidden");
-      $("codeClaimSection").classList.remove("hidden"); // Показываем поле ввода кода
+      $("codeClaimSection").classList.remove("hidden");
 
       if (HUNTER1_TYPES.includes(currentExecutor.service_id)) {
         $("hunter1Badge").classList.remove("hidden");
         $("hunter1Buttons").classList.remove("hidden");
         $("profileCover").classList.add("h1-cover");
-        $("ordersListTitle").textContent = "Доступные заказы";
+        $("ordersListTitle").textContent = "Заказы по волнам";
       } else {
         $("hunter2Buttons").classList.remove("hidden");
-        $("ordersListTitle").textContent = "🔥 Новые заказы";
+        $("ordersListTitle").textContent = "🔥 Заказы по волнам";
       }
 
       updateStatusUI();
@@ -669,7 +668,6 @@ input:checked + .slider:before { transform: translateX(20px); }
     const isOnline = currentExecutor.is_online;
     const isBusy = currentExecutor.is_busy;
     
-    // Скрываем поле ввода кода, если водитель занят
     if (isBusy) {
         $("codeClaimSection").classList.add("hidden");
     } else {
@@ -760,15 +758,58 @@ input:checked + .slider:before { transform: translateX(20px); }
     }
   }
 
+  // ИЗМЕНЕННАЯ ФУНКЦИЯ ЗАГРУЗКИ ЗАКАЗОВ (ТОЛЬКО ПО ВОЛНАМ)
   async function loadOrders() {
     if (!currentExecutor.is_online || currentExecutor.is_busy) {
       $("ordersList").innerHTML = '';
       return;
     }
     
+    $("ordersList").innerHTML = '<div style="text-align:center; padding:20px; color:#888;">Поиск заказов...</div>';
+
+    // 1. Получаем активные волны для этого водителя
+    const now = new Date().toISOString();
+    const { data: waves, error: waveErr } = await supabase.from('order_waves')
+      .select('order_id')
+      .eq('status', 'active')
+      .gt('expires_at', now);
+
+    if (waveErr) { $("ordersList").innerHTML = "Ошибка: " + waveErr.message; return; }
+
+    // 2. Фильтруем те, где есть наш ID
+    const myOrderIds = (waves || []).filter(w => {
+        let ids = w.executor_ids;
+        if (typeof ids === 'string') { try { ids = JSON.parse(ids); } catch(e) {} }
+        return Array.isArray(ids) && ids.includes(currentExecutor.id);
+    }).map(w => w.order_id);
+
+    if (myOrderIds.length === 0) {
+      const isH1 = HUNTER1_TYPES.includes(currentExecutor.service_id);
+      if (isH1) {
+        $("ordersList").innerHTML = `
+          <div class="empty-state">
+            <img src="https://cdn-icons-png.flaticon.com/512/2830/2830284.png" class="empty-state-img" alt="Нет заказов" style="filter: drop-shadow(0 0 10px rgba(245,166,35,0.3)); max-width: 180px;">
+            <h3>Пока нет новых заказов<br>по HUNTER_01.</h3>
+            <p style="font-size: 12px; margin-top: 5px;">Ожидайте волну или введите код из WhatsApp.</p>
+          </div>
+        `;
+      } else {
+        $("ordersList").innerHTML = `
+          <div class="empty-state">
+            <img src="https://cdn-icons-png.flaticon.com/512/4697/4697285.png" class="empty-state-img" alt="Нет заказов">
+            <h3>Пока нет новых заказов</h3>
+            <p>Ожидайте волну или введите код из WhatsApp.</p>
+          </div>
+        `;
+      }
+      $("ordersCount").textContent = 0;
+      return;
+    }
+
+    // 3. Запрашиваем сами заказы по ID (и проверяем, что они еще свободны)
     const { data, error } = await supabase.from('orders')
       .select('*')
-      .eq('service_id', currentExecutor.service_id)
+      .in('id', myOrderIds)
       .is('executor_id', null)
       .order('created_at', { ascending: false });
 
@@ -777,29 +818,8 @@ input:checked + .slider:before { transform: translateX(20px); }
     $("ordersCount").textContent = data.length;
     
     if (data.length === 0) {
-      const isH1 = HUNTER1_TYPES.includes(currentExecutor.service_id);
-      
-      if (isH1) {
-        $("ordersList").innerHTML = `
-          <div class="empty-state">
-            <img src="https://cdn-icons-png.flaticon.com/512/2830/2830284.png" class="empty-state-img" alt="Нет заказов" style="filter: drop-shadow(0 0 10px rgba(245,166,35,0.3)); max-width: 180px;">
-            <h3>Пока нет новых заказов<br>по HUNTER_01.</h3>
-            <p style="font-size: 12px; margin-top: 5px;">(Грузоперевозки · Манипулятор · Эвакуатор)</p>
-            <div class="empty-state-h1-box">
-              <span>⏱</span> Оставайтесь на линии — новые заказы появятся в ближайшее время!
-            </div>
-          </div>
-        `;
-      } else {
-        $("ordersList").innerHTML = `
-          <div class="empty-state">
-            <img src="https://cdn-icons-png.flaticon.com/512/4697/4697285.png" class="empty-state-img" alt="Нет заказов">
-            <h3>Пока нет новых заказов</h3>
-            <p>Оставайтесь на линии — новые заказы появятся в ближайшее время!</p>
-          </div>
-        `;
-      }
-      return;
+       $("ordersList").innerHTML = '<p style="text-align:center; padding:20px; color:#888;">Заказы уже разобрали...</p>';
+       return;
     }
 
     $("ordersList").innerHTML = data.map(o => {
@@ -967,24 +987,26 @@ input:checked + .slider:before { transform: translateX(20px); }
     }
   });
 
+  // ИЗМЕНЕННЫЙ REALTIME (СЛУШАЕМ ВОЛНЫ)
   function setupRealtime() {
     if (realtimeChannel) return; 
-    realtimeChannel = supabase.channel('executor-orders')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
-          const newOrder = payload.new;
-          if (newOrder.service_id === currentExecutor.service_id && !newOrder.executor_id) {
+    realtimeChannel = supabase.channel('executor-waves')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'order_waves' }, payload => {
+          const newWave = payload.new;
+          let ids = newWave.executor_ids;
+          if (typeof ids === 'string') { try { ids = JSON.parse(ids); } catch(e) {} }
+          
+          if (Array.isArray(ids) && ids.includes(currentExecutor.id)) {
               if (currentExecutor.is_online && !currentExecutor.is_busy) {
-                  window.addNotification(`🔔 Новый заказ #${newOrder.id.split('-')[0].toUpperCase()}`);
+                  window.addNotification(`🔔 Новый заказ по волне!`);
                   loadOrders();
               }
           }
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
-          const updatedOrder = payload.new;
-          if (updatedOrder.service_id === currentExecutor.service_id) {
-              if (currentExecutor.is_online && !currentExecutor.is_busy) {
-                  loadOrders();
-              }
+          // Если заказ обновился (например, кто-то забрал), обновляем список
+          if (currentExecutor.is_online && !currentExecutor.is_busy) {
+              loadOrders();
           }
       }).subscribe();
   }
@@ -1056,4 +1078,4 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 </script>
 </body>
-  </html>
+              </html>
