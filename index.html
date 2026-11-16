@@ -836,6 +836,7 @@ input:checked + .slider:before { transform: translateX(20px); }
     }).join('');
   }
 
+  // 🚀 ОБНОВЛЕННАЯ ФУНКЦИЯ ВЗЯТИЯ ЗАКАЗА (С ОТЛАДКОЙ RLS)
   window.takeOrder = async (orderId) => {
     if (currentExecutor.is_busy) return alert("Сначала завершите текущий заказ!");
     $("ordersList").innerHTML = '<p style="text-align:center; padding:20px;">Берем заказ...</p>';
@@ -843,14 +844,26 @@ input:checked + .slider:before { transform: translateX(20px); }
     const { data, error } = await supabase.from('orders')
       .update({ executor_id: currentExecutor.id, status: 'TAKEN' })
       .eq('id', orderId)
-      .is('executor_id', null)
       .select();
 
     if (error) {
-      alert("Ошибка: " + error.message);
+      alert("Ошибка базы: " + error.message);
       loadOrders();
-    } else if (!data || data.length === 0) {
-      alert("Упс! Этот заказ только что забрал кто-то другой.");
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      const { data: check } = await supabase.from('orders').select('*').eq('id', orderId).single();
+      
+      if (check && check.executor_id === currentExecutor.id) {
+          currentExecutor.is_busy = true;
+          updateStatusUI();
+          return;
+      } else if (check && check.executor_id) {
+          alert("Упс! Этот заказ только что забрал кто-то другой.");
+      } else {
+          alert("⚠️ База не дала взять заказ. Проверьте RLS в Supabase!");
+      }
       loadOrders();
     } else {
       await supabase.from('executors').update({ is_busy: true }).eq('id', currentExecutor.id);
@@ -1112,4 +1125,4 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 </script>
 </body>
-              </html>
+  </html>
