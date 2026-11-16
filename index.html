@@ -390,6 +390,17 @@ input:checked + .slider:before { transform: translateX(20px); }
   const supabaseKey = 'sb_publishable_6tNocMb7Mv9HqcjVaKxDDQ_PfK1DkXe';
   const supabase = createClient(supabaseUrl, supabaseKey);
 
+  // 🛡 ЗАЩИТА ОТ ВЗЛОМА (XSS)
+  function escapeHTML(str) { 
+    if(!str) return ''; 
+    return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])); 
+  }
+  
+  function telHref(phone) {
+    const d = String(phone || '').replace(/[^\d+]/g, '');
+    return d ? 'tel:' + d : '#';
+  }
+
   const labels = {
     workers:"Разнорабочий", cargo:"Грузоперевозки", evacuator:"Эвакуатор", manipulator:"Манипулятор",
     plumber:"Сантехник", cleaning:"Клининг", welder:"Сварщик", electrician:"Электрик", 
@@ -565,7 +576,7 @@ input:checked + .slider:before { transform: translateX(20px); }
           } catch(e) { console.log('Звук заблокирован браузером', e); }
       }
 
-      if (Notification.permission === "granted" && !isTest) {
+      if ('Notification' in window && Notification.permission === "granted" && !isTest) {
           new Notification("🚨 НОВЫЙ ЗАКАЗ!", {
               body: "Откройте приложение KYRAAN и примите заказ.",
               vibrate: [500, 200, 500, 200, 500],
@@ -593,7 +604,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       
       const list = document.getElementById('notif-list');
       list.style.textAlign = 'left';
-      list.innerHTML = notifications.map(n => `<div class="notif-item">${n}</div>`).join('');
+      list.innerHTML = notifications.map(n => `<div class="notif-item">${escapeHTML(n)}</div>`).join('');
       
       playAlarm();
   }
@@ -740,7 +751,7 @@ input:checked + .slider:before { transform: translateX(20px); }
     if (currentExecutor.is_busy) return alert("Сначала завершите заказ!");
     if (currentExecutor.is_online === desiredState) return;
 
-    if (desiredState && Notification.permission === "default") {
+    if (desiredState && 'Notification' in window && Notification.permission === "default") {
         await Notification.requestPermission();
     }
 
@@ -758,7 +769,7 @@ input:checked + .slider:before { transform: translateX(20px); }
     }
   }
 
-  // ИЗМЕНЕННАЯ ФУНКЦИЯ ЗАГРУЗКИ ЗАКАЗОВ (ТОЛЬКО ПО ВОЛНАМ)
+  // 🚀 ОБНОВЛЕННАЯ ЗАГРУЗКА ЗАКАЗОВ (НАПРЯМУЮ ИЗ БАЗЫ)
   async function loadOrders() {
     if (!currentExecutor.is_online || currentExecutor.is_busy) {
       $("ordersList").innerHTML = '';
@@ -767,30 +778,26 @@ input:checked + .slider:before { transform: translateX(20px); }
     
     $("ordersList").innerHTML = '<div style="text-align:center; padding:20px; color:#888;">Поиск заказов...</div>';
 
-    // 1. Получаем активные волны для этого водителя
-    const now = new Date().toISOString();
-    const { data: waves, error: waveErr } = await supabase.from('order_waves')
-      .select('order_id')
-      .eq('status', 'active')
-      .gt('expires_at', now);
+    // Ищем напрямую заказы в статусе NEW для нашей услуги
+    const { data, error } = await supabase.from('orders')
+      .select('*')
+      .eq('service_id', currentExecutor.service_id)
+      .eq('status', 'NEW')
+      .is('executor_id', null)
+      .order('created_at', { ascending: false });
 
-    if (waveErr) { $("ordersList").innerHTML = "Ошибка: " + waveErr.message; return; }
-
-    // 2. Фильтруем те, где есть наш ID
-    const myOrderIds = (waves || []).filter(w => {
-        let ids = w.executor_ids;
-        if (typeof ids === 'string') { try { ids = JSON.parse(ids); } catch(e) {} }
-        return Array.isArray(ids) && ids.includes(currentExecutor.id);
-    }).map(w => w.order_id);
-
-    if (myOrderIds.length === 0) {
+    if (error) { $("ordersList").innerHTML = "Ошибка: " + escapeHTML(error.message); return; }
+    
+    $("ordersCount").textContent = data.length;
+    
+    if (data.length === 0) {
       const isH1 = HUNTER1_TYPES.includes(currentExecutor.service_id);
       if (isH1) {
         $("ordersList").innerHTML = `
           <div class="empty-state">
             <img src="https://cdn-icons-png.flaticon.com/512/2830/2830284.png" class="empty-state-img" alt="Нет заказов" style="filter: drop-shadow(0 0 10px rgba(245,166,35,0.3)); max-width: 180px;">
             <h3>Пока нет новых заказов<br>по HUNTER_01.</h3>
-            <p style="font-size: 12px; margin-top: 5px;">Ожидайте волну или введите код из WhatsApp.</p>
+            <p style="font-size: 12px; margin-top: 5px;">Ожидайте уведомления или введите код из WhatsApp.</p>
           </div>
         `;
       } else {
@@ -798,28 +805,11 @@ input:checked + .slider:before { transform: translateX(20px); }
           <div class="empty-state">
             <img src="https://cdn-icons-png.flaticon.com/512/4697/4697285.png" class="empty-state-img" alt="Нет заказов">
             <h3>Пока нет новых заказов</h3>
-            <p>Ожидайте волну или введите код из WhatsApp.</p>
+            <p>Ожидайте уведомления или введите код из WhatsApp.</p>
           </div>
         `;
       }
-      $("ordersCount").textContent = 0;
       return;
-    }
-
-    // 3. Запрашиваем сами заказы по ID (и проверяем, что они еще свободны)
-    const { data, error } = await supabase.from('orders')
-      .select('*')
-      .in('id', myOrderIds)
-      .is('executor_id', null)
-      .order('created_at', { ascending: false });
-
-    if (error) { $("ordersList").innerHTML = "Ошибка: " + error.message; return; }
-    
-    $("ordersCount").textContent = data.length;
-    
-    if (data.length === 0) {
-       $("ordersList").innerHTML = '<p style="text-align:center; padding:20px; color:#888;">Заказы уже разобрали...</p>';
-       return;
     }
 
     $("ordersList").innerHTML = data.map(o => {
@@ -838,7 +828,7 @@ input:checked + .slider:before { transform: translateX(20px); }
           </div>
           <div class="order-address-box">
             <span class="pin">📍</span>
-            <span>${o.address || 'Адрес уточняется у клиента'}</span>
+            <span>${escapeHTML(o.address) || 'Адрес уточняется у клиента'}</span>
           </div>
           <button class="order-accept-btn" onclick="takeOrder('${o.id}')">Принять заказ →</button>
         </div>
@@ -913,17 +903,34 @@ input:checked + .slider:before { transform: translateX(20px); }
     }
   };
 
+  // 🚀 ОБНОВЛЕННЫЙ АКТИВНЫЙ ЗАКАЗ (С ЗАЩИТОЙ И АВТО-ОСВОБОЖДЕНИЕМ)
   async function loadActiveOrder() {
-    const { data } = await supabase.from('orders')
+    const { data, error } = await supabase.from('orders')
       .select('*')
       .eq('executor_id', currentExecutor.id)
       .neq('status', 'DONE')
+      .neq('status', 'CANCELLED')
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
       
+    // Если заказа нет (клиент отменил или удалил), освобождаем водителя
+    if (!data && currentExecutor.is_busy) {
+        await supabase.from('executors').update({ is_busy: false }).eq('id', currentExecutor.id);
+        currentExecutor.is_busy = false;
+        updateStatusUI();
+        window.addNotification("⚠️ Клиент отменил заказ. Вы снова свободны.");
+        return;
+    }
+
     if (data) {
       $("activeOrderTitle").textContent = `Заказ #${data.id.split('-')[0].toUpperCase()}`;
-      $("activeOrderAddress").innerHTML = `📍 ${data.address || 'Адрес уточняется'}<br><br><span style="color:#00c995; font-weight:bold;">Клиент: ${data.client_phone || 'Телефон скрыт'}</span>`;
-      $("activeOrderCall").href = `tel:${data.client_phone}`;
+      
+      const safeAddress = escapeHTML(data.address) || 'Адрес уточняется';
+      const safePhone = escapeHTML(data.client_phone) || 'Телефон скрыт';
+      
+      $("activeOrderAddress").innerHTML = `📍 ${safeAddress}<br><br><span style="color:#00c995; font-weight:bold;">Клиент: ${safePhone}</span>`;
+      $("activeOrderCall").href = telHref(data.client_phone);
     }
   }
 
@@ -965,7 +972,13 @@ input:checked + .slider:before { transform: translateX(20px); }
         const { data: urlData } = supabase.storage.from('kyraan_docs').getPublicUrl(fileName);
         const receiptUrl = urlData.publicUrl;
 
-        const { data: order } = await supabase.from('orders').select('id, address').eq('executor_id', currentExecutor.id).neq('status', 'DONE').maybeSingle();
+        const { data: order } = await supabase.from('orders')
+          .select('id, address')
+          .eq('executor_id', currentExecutor.id)
+          .neq('status', 'DONE')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
         if (order) {
             await supabase.from('orders').update({ status: 'DONE', address: `${order.address || 'Адрес не указан'} | ЧЕК: ${receiptUrl}` }).eq('id', order.id);
@@ -987,26 +1000,43 @@ input:checked + .slider:before { transform: translateX(20px); }
     }
   });
 
-  // ИЗМЕНЕННЫЙ REALTIME (СЛУШАЕМ ВОЛНЫ)
+  // 🚀 ОБНОВЛЕННЫЙ REALTIME (СЛУШАЕМ ЗАКАЗЫ НАПРЯМУЮ)
   function setupRealtime() {
     if (realtimeChannel) return; 
-    realtimeChannel = supabase.channel('executor-waves')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'order_waves' }, payload => {
-          const newWave = payload.new;
-          let ids = newWave.executor_ids;
-          if (typeof ids === 'string') { try { ids = JSON.parse(ids); } catch(e) {} }
+    realtimeChannel = supabase.channel('executor-orders')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
+          const newOrder = payload.new;
           
-          if (Array.isArray(ids) && ids.includes(currentExecutor.id)) {
+          // Если пришел новый заказ для нашей услуги
+          if (newOrder.service_id === currentExecutor.service_id && newOrder.status === 'NEW') {
               if (currentExecutor.is_online && !currentExecutor.is_busy) {
-                  window.addNotification(`🔔 Новый заказ по волне!`);
+                  window.addNotification(`🔔 Новый заказ!`);
                   loadOrders();
+                  playAlarm();
               }
           }
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
-          // Если заказ обновился (например, кто-то забрал), обновляем список
+          const updated = payload.new;
+          
+          // Если клиент отменил наш активный заказ
+          if (currentExecutor.is_busy && updated.executor_id === currentExecutor.id && updated.status === 'CANCELLED') {
+              supabase.from('executors').update({ is_busy: false }).eq('id', currentExecutor.id);
+              currentExecutor.is_busy = false;
+              updateStatusUI();
+              window.addNotification(`⚠️ Клиент отменил заказ!`);
+              return;
+          }
+
+          // Обновляем список, если кто-то другой забрал заказ
           if (currentExecutor.is_online && !currentExecutor.is_busy) {
               loadOrders();
+          }
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'orders' }, payload => {
+          // Если заказ был удален, проверяем, не висим ли мы в "занят"
+          if (currentExecutor.is_busy) {
+              loadActiveOrder();
           }
       }).subscribe();
   }
@@ -1016,9 +1046,13 @@ input:checked + .slider:before { transform: translateX(20px); }
     const { data } = await supabase.from('taxi_trips').select('*').eq('phone1', currentExecutor.phone).order('departure_at', { ascending: false });
     const list = document.getElementById('myTripsList');
     if (!data || data.length === 0) { list.innerHTML = '<p style="text-align:center;">У вас пока нет поездок.</p>'; return; }
+    
     list.innerHTML = data.map(t => `
       <div class="order-card-new">
-        <div class="order-meta"><p class="title">${t.route}</p><p class="subtitle">🚗 ${t.car} · 👥 ${t.seats} мест · 🕐 ${new Date(t.departure_at).toLocaleString('ru-RU')}</p></div>
+        <div class="order-meta">
+          <p class="title">${escapeHTML(t.route)}</p>
+          <p class="subtitle">🚗 ${escapeHTML(t.car)} · 👥 ${t.seats} мест · 🕐 ${new Date(t.departure_at).toLocaleString('ru-RU')}</p>
+        </div>
         <button class="finish-btn" style="margin-top:10px; color:var(--red);" onclick="deleteTrip('${t.id}')">Удалить</button>
       </div>
     `).join('');
