@@ -769,7 +769,6 @@ input:checked + .slider:before { transform: translateX(20px); }
     }
   }
 
-  // 🚀 ОБНОВЛЕННАЯ ЗАГРУЗКА ЗАКАЗОВ (НАПРЯМУЮ ИЗ БАЗЫ)
   async function loadOrders() {
     if (!currentExecutor.is_online || currentExecutor.is_busy) {
       $("ordersList").innerHTML = '';
@@ -778,7 +777,6 @@ input:checked + .slider:before { transform: translateX(20px); }
     
     $("ordersList").innerHTML = '<div style="text-align:center; padding:20px; color:#888;">Поиск заказов...</div>';
 
-    // Ищем напрямую заказы в статусе NEW для нашей услуги
     const { data, error } = await supabase.from('orders')
       .select('*')
       .eq('service_id', currentExecutor.service_id)
@@ -836,7 +834,6 @@ input:checked + .slider:before { transform: translateX(20px); }
     }).join('');
   }
 
-  // 🚀 ОБНОВЛЕННАЯ ФУНКЦИЯ ВЗЯТИЯ ЗАКАЗА (С ОТЛАДКОЙ RLS)
   window.takeOrder = async (orderId) => {
     if (currentExecutor.is_busy) return alert("Сначала завершите текущий заказ!");
     $("ordersList").innerHTML = '<p style="text-align:center; padding:20px;">Берем заказ...</p>';
@@ -872,7 +869,6 @@ input:checked + .slider:before { transform: translateX(20px); }
     }
   };
 
-  // ВЗЯТЬ ЗАКАЗ ПО КОДУ
   window.claimByCode = async function() {
     if (!currentExecutor.is_online) return alert("Сначала выйдите на линию!");
     if (currentExecutor.is_busy) return alert("Сначала завершите текущий заказ!");
@@ -894,9 +890,9 @@ input:checked + .slider:before { transform: translateX(20px); }
 
         if (!data.ok) {
             const msgs = {
-                not_found: '⛔ Заказ не найден или уже взят другим водителем.',
+                not_found: '⛔ Заказ не найден или уже взят другим исполнителем.',
                 wrong_service: '⛔ Этот заказ не для вашей услуги (вы не можете его взять).',
-                already_taken: '⛔ Уже взят другим водителем.',
+                already_taken: '⛔ Уже взят другим исполнителем.',
                 invalid_code: '⛔ Неверный код.',
                 no_executor: '⛔ Вы не найдены в базе.'
             };
@@ -916,7 +912,6 @@ input:checked + .slider:before { transform: translateX(20px); }
     }
   };
 
-  // 🚀 ОБНОВЛЕННЫЙ АКТИВНЫЙ ЗАКАЗ (С ЗАЩИТОЙ И АВТО-ОСВОБОЖДЕНИЕМ)
   async function loadActiveOrder() {
     const { data, error } = await supabase.from('orders')
       .select('*')
@@ -927,7 +922,6 @@ input:checked + .slider:before { transform: translateX(20px); }
       .limit(1)
       .maybeSingle();
       
-    // Если заказа нет (клиент отменил или удалил), освобождаем водителя
     if (!data && currentExecutor.is_busy) {
         await supabase.from('executors').update({ is_busy: false }).eq('id', currentExecutor.id);
         currentExecutor.is_busy = false;
@@ -947,7 +941,6 @@ input:checked + .slider:before { transform: translateX(20px); }
     }
   }
 
-  // ЗАВЕРШЕНИЕ ЗАКАЗА И QR-КОД
   $("finishOrderBtn").addEventListener("click", async () => {
       $("finishOrderBtn").style.display = "none";
       $("paymentSection").classList.remove("hidden");
@@ -1013,14 +1006,11 @@ input:checked + .slider:before { transform: translateX(20px); }
     }
   });
 
-  // 🚀 ОБНОВЛЕННЫЙ REALTIME (СЛУШАЕМ ЗАКАЗЫ НАПРЯМУЮ)
   function setupRealtime() {
     if (realtimeChannel) return; 
     realtimeChannel = supabase.channel('executor-orders')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
           const newOrder = payload.new;
-          
-          // Если пришел новый заказ для нашей услуги
           if (newOrder.service_id === currentExecutor.service_id && newOrder.status === 'NEW') {
               if (currentExecutor.is_online && !currentExecutor.is_busy) {
                   window.addNotification(`🔔 Новый заказ!`);
@@ -1031,8 +1021,6 @@ input:checked + .slider:before { transform: translateX(20px); }
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
           const updated = payload.new;
-          
-          // Если клиент отменил наш активный заказ
           if (currentExecutor.is_busy && updated.executor_id === currentExecutor.id && updated.status === 'CANCELLED') {
               supabase.from('executors').update({ is_busy: false }).eq('id', currentExecutor.id);
               currentExecutor.is_busy = false;
@@ -1040,18 +1028,27 @@ input:checked + .slider:before { transform: translateX(20px); }
               window.addNotification(`⚠️ Клиент отменил заказ!`);
               return;
           }
-
-          // Обновляем список, если кто-то другой забрал заказ
           if (currentExecutor.is_online && !currentExecutor.is_busy) {
               loadOrders();
           }
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'orders' }, payload => {
-          // Если заказ был удален, проверяем, не висим ли мы в "занят"
           if (currentExecutor.is_busy) {
               loadActiveOrder();
           }
-      }).subscribe();
+      })
+      // 👇 СЛУШАЕМ СНЯТИЕ С ЛИНИИ АДМИНОМ (РАБОТАЕТ ДЛЯ ВСЕХ ИСПОЛНИТЕЛЕЙ)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'executors', filter: `id=eq.${currentExecutor.id}` }, payload => {
+          const updated = payload.new;
+          if (updated.is_online === false && currentExecutor.is_online === true) {
+              currentExecutor.is_online = false;
+              currentExecutor.is_busy = false;
+              updateStatusUI(); 
+              window.addNotification("⚠️ Админ отклонил ваш чек. Вы сняты с линии.");
+              alert("⚠️ Админ отклонил ваш чек. Вы сняты с линии. Нажмите 'На линии', чтобы продолжить работу.");
+          }
+      })
+      .subscribe();
   }
 
   // ТАКСИ
@@ -1125,4 +1122,4 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 </script>
 </body>
-  </html>
+                                                                                                  </html>
