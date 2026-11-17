@@ -174,9 +174,9 @@ input:checked + .slider:before { transform: translateX(20px); }
     <h1>Кем вы работаете?</h1>
     
     <div style="background:#302719; border:1px solid #70501c; padding:15px; border-radius:10px; font-size:13px; color:#eee; margin-bottom:15px; line-height:1.5;">
-      ⚠️ <b>Спецтехника</b> (эвакуатор, манипулятор, грузоперевозки) и <b>Межгород такси</b> регистрируются только через Админа.
+      ⚠️ <b>Спецтехника</b> (эвакуатор, манипулятор, грузоперевозки), <b>Бишкек Такси</b> и <b>Межгород такси</b> регистрируются только через Админа.
       <br><br>
-      Отправьте фото машины и техпаспорта на наш WhatsApp:
+      Отправьте фото машины и техпаспорта (для такси — ещё и водительское удостоверение) на наш WhatsApp:
       <a href="https://wa.me/996704448998?text=Здравствуйте!%20Хочу%20зарегистрироваться%20как%20исполнитель%20в%20KYRAAN." target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; background:var(--green); color:#000; padding:13px; border-radius:11px; font-weight:bold; text-decoration:none; margin-top:10px;">
         💬 Написать Админу (+996 704 448 998)
       </a>
@@ -195,6 +195,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       <button class="choice" data-value="hour"><span>Мастер на час</span><small>Бытовые услуги</small></button>
       <button class="choice" data-value="workers"><span>Разнорабочий</span><small>Доска объявлений (бесплатно)</small></button>
       
+      <button class="choice" data-value="city_taxi"><span>🚖 Бишкек Такси</span><small>Городское такси · через Админа</small></button>
       <button class="choice" data-value="evacuator"><span>🚨 Эвакуатор</span><small>Спецтехника · через Админа</small></button>
       <button class="choice" data-value="manipulator"><span>🏗 Манипулятор</span><small>Спецтехника · через Админа</small></button>
       <button class="choice" data-value="cargo"><span>🚚 Грузоперевозки</span><small>Спецтехника · через Админа</small></button>
@@ -403,24 +404,25 @@ input:checked + .slider:before { transform: translateX(20px); }
 
   const labels = {
     workers:"Разнорабочий", cargo:"Грузоперевозки", evacuator:"Эвакуатор", manipulator:"Манипулятор",
+    city_taxi:"Бишкек Такси",
     plumber:"Сантехник", cleaning:"Клининг", welder:"Сварщик", electrician:"Электрик", 
     fridge:"Ремонт холодильников", washer:"Ремонт стиральных машин", tv:"Телемастер", 
     hour:"Мастер на час", intercity:"Межгород такси"
   };
   
-  const HUNTER_TYPES = ['cargo','evacuator','manipulator','plumber','cleaning','welder','electrician','fridge','washer','tv','hour'];
-  const HUNTER1_TYPES = ['cargo','evacuator','manipulator'];
+  const HUNTER_TYPES = ['city_taxi','cargo','evacuator','manipulator','plumber','cleaning','welder','electrician','fridge','washer','tv','hour'];
+  const HUNTER1_TYPES = ['city_taxi','cargo','evacuator','manipulator'];
   const HUNTER2_TYPES = ['plumber','cleaning','welder','electrician','fridge','washer','tv','hour'];
   
   const BOARD_TAXI = ['intercity'];
   const BOARD_WORKERS = ['workers'];
-  const ADMIN_ONLY_TYPES = ['cargo', 'evacuator', 'manipulator', 'intercity'];
+  const ADMIN_ONLY_TYPES = ['city_taxi', 'cargo', 'evacuator', 'manipulator', 'intercity'];
   const ADMIN_WHATSAPP = '996704448998';
 
   const serviceIcons = {
     'plumber': '🔧', 'electrician': '⚡', 'cleaning': '🧹', 'welder': '🔥',
     'fridge': '❄️', 'washer': '🌀', 'tv': '📺', 'hour': '🛠',
-    'cargo': '🚚', 'evacuator': '🚨', 'manipulator': '🏗'
+    'cargo': '🚚', 'evacuator': '🚨', 'manipulator': '🏗', 'city_taxi': '🚖'
   };
 
   let currentExecutor = null;
@@ -507,7 +509,12 @@ input:checked + .slider:before { transform: translateX(20px); }
 
     if (ADMIN_ONLY_TYPES.includes(selectedRegType)) {
       $("regForm").classList.add("hidden");
-      const text = encodeURIComponent(`Здравствуйте! Хочу зарегистрироваться в KYRAAN как "${labels[selectedRegType]}".\nОтправляю фото машины и техпаспорта.`);
+      const docs = selectedRegType === 'city_taxi' || selectedRegType === 'intercity'
+        ? 'фото машины, техпаспорт и водительское удостоверение'
+        : 'фото машины и техпаспорт';
+      const text = encodeURIComponent(
+        `Здравствуйте! Хочу зарегистрироваться в KYRAAN как "${labels[selectedRegType]}".\nОтправляю ${docs}.`
+      );
       window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${text}`, '_blank');
       return;
     }
@@ -815,6 +822,11 @@ input:checked + .slider:before { transform: translateX(20px); }
       const icon = serviceIcons[currentExecutor.service_id] || '🔧';
       const serviceName = labels[currentExecutor.service_id];
 
+      // Доп. строка с ценой для такси
+      const priceLine = (o.price_som && currentExecutor.service_id === 'city_taxi')
+        ? `<p class="subtitle" style="color:var(--gold); font-weight:800; font-size:14px; margin-top:4px;">💰 ${o.price_som} сом${o.distance_km ? ' · ' + o.distance_km + ' км' : ''}</p>`
+        : '';
+
       return `
         <div class="order-card-new ${isFresh ? 'fresh' : ''}">
           <div class="order-head">
@@ -822,6 +834,7 @@ input:checked + .slider:before { transform: translateX(20px); }
             <div class="order-meta">
               <p class="title">Заказ #${o.id.split('-')[0].toUpperCase()}</p>
               <p class="subtitle">${serviceName} · ${new Date(o.created_at).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'})}</p>
+              ${priceLine}
             </div>
           </div>
           <div class="order-address-box">
@@ -936,12 +949,55 @@ input:checked + .slider:before { transform: translateX(20px); }
       const safeAddress = escapeHTML(data.address) || 'Адрес уточняется';
       const safePhone = escapeHTML(data.client_phone) || 'Телефон скрыт';
       
-      $("activeOrderAddress").innerHTML = `📍 ${safeAddress}<br><br><span style="color:#00c995; font-weight:bold;">Клиент: ${safePhone}</span>`;
+      // Для такси — показываем цену
+      const priceText = (data.price_som && currentExecutor.service_id === 'city_taxi')
+          ? `<br><span style="color:var(--gold); font-weight:800;">💰 ${data.price_som} сом${data.distance_km ? ' · ' + data.distance_km + ' км' : ''}</span>`
+          : '';
+
+      $("activeOrderAddress").innerHTML = `📍 ${safeAddress}${priceText}<br><br><span style="color:#00c995; font-weight:bold;">Клиент: ${safePhone}</span>`;
       $("activeOrderCall").href = telHref(data.client_phone);
     }
   }
 
   $("finishOrderBtn").addEventListener("click", async () => {
+      // 🚖 БИШКЕК ТАКСИ — завершение БЕЗ чека и БЕЗ комиссии
+      if (currentExecutor.service_id === "city_taxi") {
+          const btn = $("finishOrderBtn");
+          btn.textContent = "Завершаем...";
+          btn.disabled = true;
+          try {
+              const { data: order } = await supabase.from('orders')
+                  .select('id')
+                  .eq('executor_id', currentExecutor.id)
+                  .neq('status', 'DONE')
+                  .neq('status', 'CANCELLED')
+                  .order('created_at', { ascending: false })
+                  .limit(1)
+                  .maybeSingle();
+
+              if (order) {
+                  await supabase.from('orders').update({ status: 'DONE' }).eq('id', order.id);
+              }
+
+              await supabase.from('executors')
+                  .update({ is_busy: false, is_online: true })
+                  .eq('id', currentExecutor.id);
+
+              currentExecutor.is_busy = false;
+              currentExecutor.is_online = true;
+              updateStatusUI();
+              loadOrders();
+              alert("✅ Заказ завершён. Вы снова на линии.");
+          } catch (err) {
+              alert("Ошибка: " + err.message);
+          } finally {
+              btn.textContent = "✅ Завершить заказ";
+              btn.disabled = false;
+          }
+          return;
+      }
+
+      // ОСТАЛЬНЫЕ СЕРВИСЫ — как раньше, с чеком на 100 сом
       $("finishOrderBtn").style.display = "none";
       $("paymentSection").classList.remove("hidden");
 
@@ -1122,4 +1178,4 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 </script>
 </body>
-                                                                                                  </html>
+</html>
